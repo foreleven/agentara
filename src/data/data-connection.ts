@@ -1,10 +1,13 @@
+import { join } from "node:path";
+
 import { Database as SQLiteDatabase } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
+import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 
 import type { Logger } from "@/shared";
 import { config, createLogger } from "@/shared";
 
-/** The Drizzle db instance type returned by {@link Database.db}. */
+/** The Drizzle db instance type returned by {@link DataConnection.db}. */
 export type DrizzleDB<
   TSchema extends Record<string, unknown> = Record<string, unknown>,
 > = ReturnType<typeof drizzle<TSchema>>;
@@ -20,7 +23,7 @@ export type DrizzleDB<
  *
  * @typeParam TSchema - The merged Drizzle schema object.
  */
-export class Database<
+export class DataConnection<
   TSchema extends Record<string, unknown> = Record<string, unknown>,
 > {
   private _sqlite: SQLiteDatabase;
@@ -36,6 +39,9 @@ export class Database<
     this._sqlite.run("PRAGMA foreign_keys = ON");
 
     this._db = drizzle(this._sqlite, { schema: schemas });
+
+    const migrationsFolder = join(import.meta.dir, "..", "..", "drizzle");
+    migrate(this._db, { migrationsFolder });
 
     this._logger.info(`Database "${dbPath}" opened`);
   }

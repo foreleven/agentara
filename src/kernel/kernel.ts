@@ -1,4 +1,4 @@
-import { Database } from "@/data";
+import { DataConnection } from "@/data";
 import {
   createLogger,
   extractTextContent,
@@ -17,7 +17,7 @@ import * as taskingSchema from "./tasking/data";
  * Lazy-creation singleton: the instance is created on first `getInstance()`.
  */
 class Kernel {
-  private _database!: Database;
+  private _database!: DataConnection;
   private _sessionManager!: SessionManager;
   private _taskDispatcher!: TaskDispatcher;
   private _honoServer!: HonoServer;
@@ -30,7 +30,7 @@ class Kernel {
     this._initServer();
   }
 
-  get database(): Database {
+  get database(): DataConnection {
     return this._database;
   }
 
@@ -47,7 +47,10 @@ class Kernel {
   }
 
   private _initDatabase(): void {
-    this._database = new Database({ ...taskingSchema, ...sessioningSchema });
+    this._database = new DataConnection({
+      ...taskingSchema,
+      ...sessioningSchema,
+    });
   }
 
   private _initSessionManager(): void {

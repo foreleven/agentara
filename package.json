@@ -4,11 +4,11 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "db:generate": "bunx drizzle-kit generate",
     "build:bin": "rm -rf dist/bin && bun build index.ts --compile --outfile dist/bin/agentara ",
     "build:js": "rm -rf dist/js && bun build ./src/index.ts --outdir ./dist/js --splitting --target bun",
     "check": "tsc --noEmit && eslint . --ext .ts",
     "check:types": "tsc --noEmit",
-    "chat": "bun run chat.ts",
     "dev": "bun run index.ts",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",

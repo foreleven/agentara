@@ -29,9 +29,10 @@ class BootLoader {
       "\x1b[31m" +
         logo +
         "\x1b[0m" +
-        "\n\nCopyright (c) 2026 Agentara. All rights reserved.\nVisit https://github.com/agentara/agentara for more information.\n\n\n",
+        "\n\nCopyright (c) 2026 Agentara. All rights reserved.\nVisit https://github.com/agentara/agentara for more information.\n\n",
     );
     await Kernel.__internalInitialize();
+    await Kernel.getInstance().start();
     logger.info("🚀 Agentara is now running...");
   }
 }

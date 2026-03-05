@@ -1,0 +1,134 @@
+import {
+  extractTextContent,
+  type MessageContent,
+  type ToolMessage,
+  type AgentRunner,
+  type AgentRunOptions,
+  type AssistantMessage,
+  type SystemMessage,
+  type UserMessage,
+} from "@/shared";
+
+/**
+ * The agent runner for Claude Code CLI.
+ */
+export class ClaudeAgentRunner implements AgentRunner {
+  readonly type = "claude";
+
+  async *stream(
+    message: UserMessage,
+    options: AgentRunOptions,
+  ): AsyncIterableIterator<SystemMessage | AssistantMessage | ToolMessage> {
+    const sessionId = message.session_id;
+    const isNew = options?.isNewSession ?? false;
+    const textContentOfUserMessage = JSON.stringify(
+      extractTextContent(message),
+    );
+
+    const args = [
+      "claude",
+      ...(!isNew ? ["--resume", sessionId] : ["--session-id", sessionId]),
+      "--print",
+      "--output-format",
+      "stream-json",
+      "--verbose",
+      textContentOfUserMessage,
+    ];
+    const proc = Bun.spawn(args, {
+      cwd: options.cwd,
+      env: {
+        ...Bun.env,
+        ANTHROPIC_API_KEY: "",
+      },
+      stderr: "pipe",
+    });
+    const decoder = new TextDecoder();
+    const stderrChunks: Uint8Array[] = [];
+    const stderrPipe = proc.stderr.pipeTo(
+      new WritableStream({
+        write(chunk) {
+          stderrChunks.push(chunk);
+        },
+      }),
+    );
+    let buffer = "";
+    let stdoutRaw = "";
+    for await (const chunk of proc.stdout) {
+      const decoded = decoder.decode(chunk, { stream: true });
+      buffer += decoded;
+      stdoutRaw += decoded;
+      const lines = buffer.split("\n");
+      buffer = lines.pop()!;
+      for (const line of lines) {
+        if (line.trim()) {
+          const parsed = this._parseStreamLine(line.trim(), sessionId);
+          if (parsed) {
+            yield parsed;
+          }
+        }
+      }
+    }
+    if (buffer.trim()) {
+      const parsed = this._parseStreamLine(buffer.trim(), sessionId);
+      if (parsed) {
+        yield parsed;
+      }
+    }
+    const exitCode = await proc.exited;
+    await stderrPipe;
+    if (exitCode !== 0) {
+      const stderrText =
+        stderrChunks.length > 0
+          ? decoder.decode(Bun.concatArrayBuffers(stderrChunks))
+          : "";
+      const parts: string[] = [];
+      if (stdoutRaw.trim()) {
+        parts.push(`Stdout:\n${stdoutRaw.trim()}`);
+      }
+      if (stderrText.trim()) {
+        parts.push(`Stderr:\n${stderrText.trim()}`);
+      }
+      const detail = parts.length > 0 ? `\n\n${parts.join("\n\n")}` : "";
+      throw new Error(`Claude Code exited with code ${exitCode}${detail}`);
+    }
+  }
+
+  private _parseStreamLine(
+    line: string,
+    sessionId: string,
+  ): AssistantMessage | ToolMessage | SystemMessage | null {
+    try {
+      const obj = JSON.parse(line);
+      if (obj.type === "system") {
+        const message: SystemMessage = {
+          id: obj.uuid,
+          session_id: obj.session_id,
+          role: "system",
+          subtype: obj.subtype,
+        };
+        return message;
+      } else if (obj.type === "assistant" || obj.type === "user") {
+        let role: "assistant" | "tool" = "assistant";
+        if (obj.type === "user" && containsToolResult(obj.message)) {
+          role = "tool";
+        } else {
+          role = "assistant";
+        }
+        const message: AssistantMessage | ToolMessage = {
+          id: obj.uuid,
+          session_id: sessionId,
+          role,
+          content: obj.message.content,
+        };
+        return message;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+}
+
+function containsToolResult(message: { content: MessageContent[] }): boolean {
+  return message.content.some((content) => content.type === "tool_result");
+}

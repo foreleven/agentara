@@ -1,6 +1,10 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+
 import type { Server } from "bun";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
+import { cors } from "hono/cors";
 
 import type { Logger } from "@/shared";
 import { createLogger } from "@/shared";
@@ -15,10 +19,15 @@ import { healthRoutes, sessionRoutes, taskRoutes } from "./routes";
  * use with Hono's RPC client (`hc<AppType>`).
  */
 function createApp() {
-  return new Hono()
-    .route("/api", healthRoutes)
-    .route("/api/sessions", sessionRoutes)
-    .route("/api/tasks", taskRoutes);
+  return (
+    new Hono()
+      // CORS middleware
+      .use("/api/*", cors({ origin: "*" }))
+      // Routes
+      .route("/api", healthRoutes)
+      .route("/api/sessions", sessionRoutes)
+      .route("/api/tasks", taskRoutes)
+  );
 }
 
 /**
@@ -42,7 +51,6 @@ export class HonoServer {
   constructor() {
     this._logger = createLogger("hono-server");
     this._app = createApp();
-    this._setupMiddleware();
     this._setupStaticServing();
   }
 
@@ -83,15 +91,14 @@ export class HonoServer {
     }
   }
 
-  private _setupMiddleware(): void {
-    this._app.use("/api/*");
-  }
-
   private _setupStaticServing(): void {
     if (Bun.env.NODE_ENV === "production") {
-      this._app.use("/*", serveStatic({ root: "./web/dist" }));
-      // SPA fallback: serve index.html for non-API, non-asset routes
-      this._app.get("*", serveStatic({ path: "./web/dist/index.html" }));
+      const webRoot = join(process.cwd(), "web", "dist");
+      if (existsSync(webRoot)) {
+        this._app.use("/*", serveStatic({ root: webRoot }));
+        // SPA fallback: serve index.html for non-API, non-asset routes
+        this._app.get("*", serveStatic({ path: join(webRoot, "index.html") }));
+      }
     }
   }
 }

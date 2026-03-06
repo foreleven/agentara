@@ -7,7 +7,6 @@ import {
   MessagesSquareIcon,
 } from "lucide-react";
 
-import { useSessions } from "@/api";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sidebar,
@@ -24,6 +23,7 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useSessions } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const navItems = [

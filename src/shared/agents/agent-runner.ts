@@ -38,7 +38,7 @@ export interface AgentRunner {
    */
   stream(
     // eslint-disable-next-line no-unused-vars
-    message: UserMessage,
+    userMessage: UserMessage,
     // eslint-disable-next-line no-unused-vars
     options: AgentRunOptions,
   ): AsyncIterableIterator<SystemMessage | AssistantMessage | ToolMessage>;

@@ -15,7 +15,7 @@ bun run lint   # ESLint
 ## Architecture
 
 - Framework: React 19 + TypeScript + Vite 7
-- Routing: TanStack Router (file-based, routes in src/routes/). Route tree is auto-generated into src/routeTree.gen.ts — do not edit
+- Routing: TanStack Router (file-based, routes in src/app/). Route tree is auto-generated into src/routeTree.gen.ts — do not edit
 manually.
 - Styling: Tailwind CSS v4 + Shadcn (new-york style, neutral base color, CSS variables). UI primitives live in src/components/ui/ and
 are ESLint-ignored.

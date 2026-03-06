@@ -1,0 +1,149 @@
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import type { Task } from "agentara";
+import dayjs from "dayjs";
+
+import { Tooltip } from "@/components/tooltip";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import { firstPartOfUUID } from "@/lib/utils/uuid";
+
+import { Badge } from "./ui/badge";
+
+const lanes = [
+  {
+    key: "pending",
+    label: "Pending",
+    color: "var(--kanban-board-circle-gray)",
+  },
+  {
+    key: "running",
+    label: "Running",
+    color: "var(--kanban-board-circle-blue)",
+  },
+  {
+    key: "done",
+    label: "Completed or Failed",
+    color: "var(--kanban-board-circle-green)",
+  },
+] as const;
+
+interface TaskCardProps {
+  task: Task;
+  lane: (typeof lanes)[number];
+  onCopyTaskId: (taskId: string) => void;
+}
+
+function TaskCard({ task, lane, onCopyTaskId }: TaskCardProps) {
+  return (
+    <Card className="bg-sidebar-accent text-white py-2">
+      <CardHeader className="px-4">
+        <Tooltip content="Click to copy">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onCopyTaskId(task.id);
+            }}
+            className="truncate text-left text-[10px] text-muted-foreground/40 font-medium hover:text-muted-foreground transition-colors cursor-pointer"
+          >
+            # {firstPartOfUUID(task.id)}...
+          </button>
+        </Tooltip>
+        <CardTitle
+          className="text-sm font-normal"
+          style={{
+            color:
+              task.status === "failed"
+                ? "var(--kanban-board-circle-red)"
+                : lane.color,
+          }}
+        >
+          {task.payload.type === "inbound_message" &&
+            task.payload.message.content
+              .map((content) => content.type === "text" && content.text)
+              .join(" ")}
+        </CardTitle>
+        <CardDescription className="text-xs">
+          Last updated {dayjs(task.updated_at).fromNow()}
+        </CardDescription>
+      </CardHeader>
+    </Card>
+  );
+}
+
+interface TaskKanbanLaneProps {
+  lane: (typeof lanes)[number];
+  tasks: Task[];
+  onCopyTaskId: (taskId: string) => void;
+}
+
+function TaskKanbanLane({ lane, tasks, onCopyTaskId }: TaskKanbanLaneProps) {
+  const [parent] = useAutoAnimate();
+  return (
+    <Card className="flex-1 py-4 bg-sidebar rounded-lg gap-0 pb-0">
+      <CardHeader className="px-4">
+        <CardTitle className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div
+            className={cn("size-2 rounded-full")}
+            style={{ backgroundColor: lane.color }}
+          ></div>
+          <div>{lane.label}</div>
+          <Badge className="size-4 bg-muted-foreground">{tasks.length}</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1 min-h-0 px-0">
+        <ScrollArea className="size-full">
+          <div ref={parent} className="flex flex-col gap-2 pb-4 px-3">
+            {tasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                lane={lane}
+                onCopyTaskId={onCopyTaskId}
+              />
+            ))}
+          </div>
+        </ScrollArea>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function TaskKanban({
+  tasks,
+  onCopyTaskId,
+}: {
+  tasks: Task[];
+  onCopyTaskId: (taskId: string) => void;
+}) {
+  return (
+    <div className="size-full flex justify-center items-center">
+      <div className="flex w-full max-w-[1024px] h-full gap-4 p-6">
+        {lanes.map((lane) => {
+          const filteredTasks = tasks.filter((task) => {
+            if (lane.key === "done") {
+              return task.status === "completed" || task.status === "failed";
+            }
+            return task.status === lane.key;
+          });
+          return (
+            <TaskKanbanLane
+              key={lane.key}
+              lane={lane}
+              tasks={filteredTasks}
+              onCopyTaskId={onCopyTaskId}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}

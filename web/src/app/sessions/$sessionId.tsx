@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { useSessionHistory } from "@/api";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSessionHistory } from "@/lib/api";
 
 export const Route = createFileRoute("/sessions/$sessionId")({
   component: SessionDetailPage,

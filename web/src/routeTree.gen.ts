@@ -8,12 +8,12 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as TasksIndexRouteImport } from './routes/tasks/index'
-import { Route as SessionsIndexRouteImport } from './routes/sessions/index'
-import { Route as MemoryIndexRouteImport } from './routes/memory/index'
-import { Route as SessionsSessionIdRouteImport } from './routes/sessions/$sessionId'
+import { Route as rootRouteImport } from './app/__root'
+import { Route as IndexRouteImport } from './app/index'
+import { Route as TasksIndexRouteImport } from './app/tasks/index'
+import { Route as SessionsIndexRouteImport } from './app/sessions/index'
+import { Route as MemoryIndexRouteImport } from './app/memory/index'
+import { Route as SessionsSessionIdRouteImport } from './app/sessions/$sessionId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',

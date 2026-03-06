@@ -1,5 +1,5 @@
-import { ClaudeAgentRunner } from "@/community/anthropic";
-import type { AgentRunner } from "@/shared";
+// import { ClaudeAgentRunner } from "@/community/anthropic";
+import { DummyAgentRunner, type AgentRunner } from "@/shared";
 
 /**
  * Creates an agent runner based on the agent type.
@@ -9,7 +9,8 @@ import type { AgentRunner } from "@/shared";
 export function createAgentRunner(agentType: string): AgentRunner {
   switch (agentType) {
     case "claude":
-      return new ClaudeAgentRunner();
+      return new DummyAgentRunner();
+    // return new ClaudeAgentRunner();
     default:
       throw new Error(`Unknown agent type: ${agentType}`);
   }

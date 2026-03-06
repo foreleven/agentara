@@ -6,7 +6,6 @@ import { CopyIcon, MessageSquare, MoreHorizontal, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { useSessions } from "@/api";
 import { Tooltip } from "@/components/tooltip";
 import {
   DropdownMenu,
@@ -24,7 +23,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSessions } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { firstPartOfUUID } from "@/lib/utils/uuid";
 
 dayjs.extend(relativeTime);
 
@@ -126,7 +127,7 @@ function SessionsPage() {
                           }}
                           className="truncate text-left text-[10px] text-muted-foreground/40 font-medium hover:text-muted-foreground transition-colors cursor-pointer"
                         >
-                          {session.id}
+                          # {firstPartOfUUID(session.id)}...
                         </button>
                       </Tooltip>
                       <span className="truncate text-sm font-medium">

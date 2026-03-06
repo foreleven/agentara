@@ -8,7 +8,7 @@ import { defineConfig } from "vite";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    tanstackRouter({ routesDirectory: "./src/routes" }),
+    tanstackRouter({ routesDirectory: "./src/app" }),
     react(),
     tailwindcss(),
   ],

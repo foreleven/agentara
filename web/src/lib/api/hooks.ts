@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Message, Session, Task } from "agentara";
 
-import { api } from "@/api/client";
+import { api } from "./client";
 
 /**
  * Fetches all sessions.
@@ -30,12 +30,16 @@ export function useSessionHistory(sessionId: string) {
 
 /**
  * Fetches all current tasks.
+ * @param options.refreshInterval - If set, refetches at this interval (ms) while the query is active.
  */
-export function useTasks() {
+export function useTasks(options?: { refreshInterval?: number }) {
   return useQuery({
     queryKey: ["tasks"],
     queryFn: () =>
       api.tasks.$get().then((res) => res.json() as Promise<Task[]>),
+    ...(options?.refreshInterval != null && {
+      refetchInterval: options.refreshInterval,
+    }),
   });
 }
 

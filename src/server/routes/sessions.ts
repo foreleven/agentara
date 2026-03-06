@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 
 import { kernel } from "@/kernel";
 import type { Message } from "@/shared";
@@ -19,11 +20,8 @@ export const sessionRoutes = new Hono()
       const file = Bun.file(config.paths.resolveSessionFilePath(id));
       const jsonl = (await file.text()).trim();
       messages = jsonl.split("\n").map((line) => JSON.parse(line));
-    } catch (e) {
-      return c.json({
-        messages: [],
-        error: `Failed to read session history: ${e}`,
-      });
+      return c.json({ messages });
+    } catch {
+      throw new HTTPException(404, { message: "Session not found" });
     }
-    return c.json({ messages });
   });

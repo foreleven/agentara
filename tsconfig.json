@@ -29,7 +29,7 @@
     // Paths
     "paths": {
       "@/*": ["./src/*"],
-      "agentara": ["./src/index.ts"]
+      "agentara/boot-loader": ["./src/boot-loader/index.ts"]
     }
   },
   "exclude": ["web"]

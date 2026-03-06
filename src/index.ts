@@ -1,2 +1,2 @@
-export * from "./boot-loader";
+export type { AppType } from "./server";
 export * from "./shared";

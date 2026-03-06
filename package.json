@@ -9,7 +9,9 @@
     "build:js": "rm -rf dist/js && bun build ./src/index.ts --outdir ./dist/js --splitting --target bun",
     "check": "tsc --noEmit && eslint . --ext .ts",
     "check:types": "tsc --noEmit",
-    "dev": "bun run index.ts",
+    "dev": "concurrently \"bun run dev:server\" \"bun run dev:web\"",
+    "dev:server": "bun run index.ts",
+    "dev:web": "cd web && bun run dev",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "prepare": "husky"
@@ -34,6 +36,7 @@
   },
   "dependencies": {
     "bunqueue": "^2.6.0",
+    "concurrently": "^9.2.1",
     "dayjs": "^1.11.19",
     "drizzle-orm": "^0.45.1",
     "eventemitter3": "^5.0.4",

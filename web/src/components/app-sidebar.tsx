@@ -5,6 +5,7 @@ import {
   BrainCircuitIcon,
   ListTodoIcon,
   MessagesSquareIcon,
+  SparklesIcon,
 } from "lucide-react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -29,6 +30,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { title: "Sessions", icon: MessagesSquareIcon, to: "/sessions" },
   { title: "Tasks", icon: ListTodoIcon, to: "/tasks" },
+  { title: "Skills", icon: SparklesIcon, to: "/skills" },
   { title: "Memory", icon: BrainCircuitIcon, to: "/memory" },
 ] as const;
 

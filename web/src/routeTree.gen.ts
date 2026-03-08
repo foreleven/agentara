@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './app/__root'
 import { Route as IndexRouteImport } from './app/index'
 import { Route as TasksIndexRouteImport } from './app/tasks/index'
+import { Route as SkillsIndexRouteImport } from './app/skills/index'
 import { Route as SessionsIndexRouteImport } from './app/sessions/index'
 import { Route as MemoryIndexRouteImport } from './app/memory/index'
 import { Route as SessionsSessionIdRouteImport } from './app/sessions/$sessionId'
@@ -23,6 +24,11 @@ const IndexRoute = IndexRouteImport.update({
 const TasksIndexRoute = TasksIndexRouteImport.update({
   id: '/tasks/',
   path: '/tasks/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SkillsIndexRoute = SkillsIndexRouteImport.update({
+  id: '/skills/',
+  path: '/skills/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SessionsIndexRoute = SessionsIndexRouteImport.update({
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/memory/': typeof MemoryIndexRoute
   '/sessions/': typeof SessionsIndexRoute
+  '/skills/': typeof SkillsIndexRoute
   '/tasks/': typeof TasksIndexRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/memory': typeof MemoryIndexRoute
   '/sessions': typeof SessionsIndexRoute
+  '/skills': typeof SkillsIndexRoute
   '/tasks': typeof TasksIndexRoute
 }
 export interface FileRoutesById {
@@ -61,6 +69,7 @@ export interface FileRoutesById {
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/memory/': typeof MemoryIndexRoute
   '/sessions/': typeof SessionsIndexRoute
+  '/skills/': typeof SkillsIndexRoute
   '/tasks/': typeof TasksIndexRoute
 }
 export interface FileRouteTypes {
@@ -70,15 +79,23 @@ export interface FileRouteTypes {
     | '/sessions/$sessionId'
     | '/memory/'
     | '/sessions/'
+    | '/skills/'
     | '/tasks/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/sessions/$sessionId' | '/memory' | '/sessions' | '/tasks'
+  to:
+    | '/'
+    | '/sessions/$sessionId'
+    | '/memory'
+    | '/sessions'
+    | '/skills'
+    | '/tasks'
   id:
     | '__root__'
     | '/'
     | '/sessions/$sessionId'
     | '/memory/'
     | '/sessions/'
+    | '/skills/'
     | '/tasks/'
   fileRoutesById: FileRoutesById
 }
@@ -87,6 +104,7 @@ export interface RootRouteChildren {
   SessionsSessionIdRoute: typeof SessionsSessionIdRoute
   MemoryIndexRoute: typeof MemoryIndexRoute
   SessionsIndexRoute: typeof SessionsIndexRoute
+  SkillsIndexRoute: typeof SkillsIndexRoute
   TasksIndexRoute: typeof TasksIndexRoute
 }
 
@@ -104,6 +122,13 @@ declare module '@tanstack/react-router' {
       path: '/tasks'
       fullPath: '/tasks/'
       preLoaderRoute: typeof TasksIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/skills/': {
+      id: '/skills/'
+      path: '/skills'
+      fullPath: '/skills/'
+      preLoaderRoute: typeof SkillsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sessions/': {
@@ -135,6 +160,7 @@ const rootRouteChildren: RootRouteChildren = {
   SessionsSessionIdRoute: SessionsSessionIdRoute,
   MemoryIndexRoute: MemoryIndexRoute,
   SessionsIndexRoute: SessionsIndexRoute,
+  SkillsIndexRoute: SkillsIndexRoute,
   TasksIndexRoute: TasksIndexRoute,
 }
 export const routeTree = rootRouteImport

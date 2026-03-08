@@ -2,6 +2,7 @@ export { apiFetch } from "./client";
 export {
   useSessionHistory,
   useSessions,
+  useSkills,
   useSoulMemory,
   useSoulMemoryUpdate,
   useTaskDispatch,

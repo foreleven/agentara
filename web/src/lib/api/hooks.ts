@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Message, Session, Task } from "agentara";
+import type { Message, Session, Skill, Task } from "agentara";
 
 import { api } from "./client";
 
@@ -47,6 +47,19 @@ export function useTasks(options?: { refreshInterval?: number }) {
  * Dispatches a new inbound message task.
  */
 export function useTaskDispatch() {}
+
+// --- Skills ---
+
+/**
+ * Fetches all installed Claude Code skills from `~/.claude/skills/`.
+ */
+export function useSkills() {
+  return useQuery({
+    queryKey: ["skills"],
+    queryFn: () =>
+      api.skills.$get().then((res) => res.json() as Promise<Skill[]>),
+  });
+}
 
 // --- Memory ---
 

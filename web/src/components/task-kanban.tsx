@@ -42,7 +42,7 @@ interface TaskCardProps {
 
 function TaskCard({ task, lane, onCopyTaskId }: TaskCardProps) {
   return (
-    <Card className="bg-sidebar-accent text-white py-2">
+    <Card className="bg-sidebar-accent text-white py-2 hover:bg-sidebar-accent/50">
       <CardHeader className="px-4">
         <Tooltip content="Click to copy">
           <button

@@ -20,7 +20,6 @@ export const ThinkingMessageContent = z.object({
    * The thinking content of the message.
    */
   thinking: z.string(),
-  signature: z.string(),
 });
 export interface ThinkingMessageContent extends z.infer<
   typeof ThinkingMessageContent

@@ -1,3 +1,2 @@
 export * from "./message-channel";
 export * from "./types";
-export * from "./utils";

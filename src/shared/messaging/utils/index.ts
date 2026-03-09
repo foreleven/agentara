@@ -25,6 +25,28 @@ export function isPureTextMessage(message: Message): boolean {
   return false;
 }
 
+export function containsThinking(message: Message): boolean {
+  if (message.role === "assistant") {
+    for (const content of message.content) {
+      if (content.type === "thinking") {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+export function containsToolUse(message: Message): boolean {
+  if (message.role === "assistant") {
+    for (const content of message.content) {
+      if (content.type === "tool_use") {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 export function extractTextContent(
   message: Message,
   options: { includeToolUse?: boolean; includeThinking?: boolean } = {

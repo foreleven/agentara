@@ -1,10 +1,7 @@
+import { FeishuMessageChannel } from "@/community/feishu";
 import { DataConnection } from "@/data";
-import type { AssistantMessage } from "@/shared";
-import {
-  createLogger,
-  extractTextContent,
-  type InboundMessageTaskPayload,
-} from "@/shared";
+import type { AssistantMessage, MessageChannel, UserMessage } from "@/shared";
+import { createLogger, type InboundMessageTaskPayload } from "@/shared";
 
 import { HonoServer } from "../server";
 
@@ -18,16 +15,18 @@ import * as taskingSchema from "./tasking/data";
  * Lazy-creation singleton: the instance is created on first `getInstance()`.
  */
 class Kernel {
+  private _logger = createLogger("kernel");
   private _database!: DataConnection;
   private _sessionManager!: SessionManager;
   private _taskDispatcher!: TaskDispatcher;
+  private _messageChannel!: MessageChannel;
   private _honoServer!: HonoServer;
-  private _logger = createLogger("kernel");
 
   constructor() {
     this._initDatabase();
     this._initSessionManager();
     this._initTaskDispatcher();
+    this._initMessageChannel();
     this._initServer();
   }
 
@@ -66,7 +65,15 @@ class Kernel {
     this._taskDispatcher = new TaskDispatcher({
       db: this._database.db,
     });
-    this._taskDispatcher.route("inbound_message", this._inboundMessageHandler);
+    this._taskDispatcher.route(
+      "inbound_message",
+      this._handleInboundMessageTask,
+    );
+  }
+
+  private _initMessageChannel(): void {
+    this._messageChannel = new FeishuMessageChannel();
+    this._messageChannel.on("message:inbound", this._handleInboundMessage);
   }
 
   /**
@@ -76,9 +83,18 @@ class Kernel {
     await this._sessionManager.start();
     await this._taskDispatcher.start();
     await this._honoServer.start();
+    await this._messageChannel.start();
   }
 
-  private _inboundMessageHandler = async (
+  private _handleInboundMessage = async (message: UserMessage) => {
+    const task: InboundMessageTaskPayload = {
+      type: "inbound_message",
+      message,
+    };
+    await this._taskDispatcher.dispatch(message.session_id, task);
+  };
+
+  private _handleInboundMessageTask = async (
     taskId: string,
     sessionId: string,
     payload: InboundMessageTaskPayload,
@@ -87,32 +103,48 @@ class Kernel {
     const session = await this._sessionManager.resolveSession(sessionId, {
       firstMessage: inboundMessage,
     });
-    this._logger.info(
+    let contents: AssistantMessage["content"] = [
       {
-        task_id: taskId,
-        session_id: sessionId,
-        inbound_message: extractTextContent(inboundMessage),
+        type: "thinking",
+        thinking: "Thinking...",
       },
-      "inbound_message handler executing",
+    ];
+    const outboundMessage = await this._messageChannel.replyMessage(
+      inboundMessage.id,
+      {
+        role: "assistant",
+        session_id: session.id,
+        content: contents,
+      },
+      {
+        streaming: true,
+      },
     );
+    contents = [];
     const stream = await session.stream(inboundMessage);
     let lastMessage: AssistantMessage | undefined;
     for await (const message of stream) {
       if (message.role === "assistant") {
+        contents.push(...message.content);
+        await this._messageChannel.updateMessageContent(
+          outboundMessage.id,
+          contents,
+          {
+            streaming: true,
+          },
+        );
         lastMessage = message;
       }
     }
     if (!lastMessage) {
       throw new Error("No assistant message received from the agent.");
     }
-    const outboundMessage = lastMessage;
-    this._logger.info(
+    await this._messageChannel.updateMessageContent(
+      outboundMessage.id,
+      contents,
       {
-        session_id: sessionId,
-        inbound_message: extractTextContent(inboundMessage),
-        outbound_message: extractTextContent(outboundMessage),
+        streaming: false,
       },
-      "inbound_message handler executed",
     );
   };
 }

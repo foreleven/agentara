@@ -1,0 +1,221 @@
+import type {
+  AssistantMessage,
+  BashToolUseMessageContent,
+  EditToolUseMessageContent,
+  GlobToolUseMessageContent,
+  GrepToolUseMessageContent,
+  ReadToolUseMessageContent,
+  SkillToolUseMessageContent,
+  ToolSearchToolUseMessageContent,
+  ToolUseMessageContent,
+  WebFetchToolUseMessageContent,
+  WebSearchToolUseMessageContent,
+  WriteToolUseMessageContent,
+} from "@/shared";
+
+import type {
+  Card,
+  CollapsiblePanel,
+  DivElement,
+  MarkdownElement,
+} from "./types";
+
+export function renderMessageCard(
+  messageContent: AssistantMessage["content"],
+  { streaming }: { streaming: boolean },
+): Card {
+  const stepPanel: CollapsiblePanel = {
+    tag: "collapsible_panel",
+    expanded: streaming,
+    border: {
+      color: "grey",
+      corner_radius: "6px",
+    },
+    vertical_spacing: "2px",
+    header: {
+      title: {
+        tag: "plain_text",
+        text_color: "grey",
+        text_size: "notation",
+        content: "",
+      },
+      icon: {
+        tag: "standard_icon",
+        token: "right_outlined",
+        color: "grey",
+      },
+      icon_position: "right",
+      icon_expanded_angle: 90,
+    },
+    elements: [],
+  };
+  const card: Card = {
+    schema: "2.0",
+    config: {
+      streaming_mode: true,
+      enable_forward: true,
+      enable_forward_interaction: false,
+      width_mode: "fill",
+      summary: {
+        content: "",
+      },
+    },
+    body: {
+      elements: [stepPanel],
+    },
+  };
+  for (const content of messageContent) {
+    if (content.type === "thinking") {
+      stepPanel.elements.push(renderStep(content.thinking, "robot_outlined"));
+    } else if (content.type === "tool_use") {
+      renderTool(content, stepPanel);
+    }
+  }
+  if (!streaming) {
+    const lastContent = messageContent[messageContent.length - 1];
+    if (lastContent?.type === "text") {
+      const resultElement: MarkdownElement = {
+        tag: "markdown",
+        content: lastContent.text,
+      };
+      card.config!.summary.content = lastContent.text;
+      card.body!.elements.push(resultElement);
+    }
+  } else {
+    card.config!.summary.content = "Working on it...";
+  }
+
+  const stepCount = stepPanel.elements.length;
+  if (stepCount > 0) {
+    const stepCountText =
+      stepCount + " " + (stepCount === 1 ? "step" : "steps");
+    if (streaming) {
+      stepPanel.header.title.content = `Working on it (${stepCountText})`;
+    } else {
+      stepPanel.header.title.content = `Show ${stepCountText}`;
+    }
+  } else {
+    delete card.body!.elements[0];
+  }
+  return card;
+}
+
+function renderTool(
+  content: ToolUseMessageContent,
+  stepPanel: CollapsiblePanel,
+) {
+  switch (content.name) {
+    case "Agent":
+    case "Task":
+      stepPanel.elements.push(renderStep("Run sub-agent", "robot_outlined"));
+      break;
+    case "Bash":
+      const bashContent = content as BashToolUseMessageContent;
+      stepPanel.elements.push(
+        renderStep(
+          bashContent.input.description ?? bashContent.input.command,
+          "computer_outlined",
+        ),
+      );
+      break;
+    case "Edit":
+      const editContent = content as EditToolUseMessageContent;
+      stepPanel.elements.push(
+        renderStep(`Edit "${editContent.input.file_path}"`, "edit_outlined"),
+      );
+      break;
+    case "Glob":
+      const globContent = content as GlobToolUseMessageContent;
+      stepPanel.elements.push(
+        renderStep(
+          `Search files by pattern "${globContent.input.pattern}"`,
+          "card-search_outlined",
+        ),
+      );
+      break;
+    case "Grep":
+      const grepContent = content as GrepToolUseMessageContent;
+      stepPanel.elements.push(
+        renderStep(
+          `Search text by pattern "${grepContent.input.pattern}" in "${grepContent.input.glob}"`,
+          "doc-search_outlined",
+        ),
+      );
+      break;
+    case "WebFetch":
+      const webFetchContent = content as WebFetchToolUseMessageContent;
+      stepPanel.elements.push(
+        renderStep(
+          `Fetch web page from "${webFetchContent.input.url}"`,
+          "language_outlined",
+        ),
+      );
+      break;
+    case "WebSearch":
+      const webSearchContent = content as WebSearchToolUseMessageContent;
+      stepPanel.elements.push(
+        renderStep(
+          `Search web for "${webSearchContent.input.query}"`,
+          "search_outlined",
+        ),
+      );
+      break;
+    case "Read":
+      const readContent = content as ReadToolUseMessageContent;
+      stepPanel.elements.push(
+        renderStep(
+          `Read file "${readContent.input.file_path}"`,
+          "file-link-bitable_outlined",
+        ),
+      );
+      break;
+    case "Write":
+      const writeContent = content as WriteToolUseMessageContent;
+      stepPanel.elements.push(
+        renderStep(
+          `Write file "${writeContent.input.file_path}"`,
+          "edit_outlined",
+        ),
+      );
+      break;
+    case "Skill":
+      const skillContent = content as SkillToolUseMessageContent;
+      stepPanel.elements.push(
+        renderStep(
+          `Load skill "${skillContent.input.skill}"`,
+          "file-link-mindnote_outlined",
+        ),
+      );
+      break;
+    case "ToolSearch":
+      const toolSearchContent = content as ToolSearchToolUseMessageContent;
+      stepPanel.elements.push(
+        renderStep(
+          `Search tools for "${toolSearchContent.input.query}"`,
+          "search_outlined",
+        ),
+      );
+      break;
+    default:
+      stepPanel.elements.push(
+        renderStep(content.name, "setting-inter_outlined"),
+      );
+  }
+}
+
+function renderStep(text: string, iconToken: string): DivElement {
+  return {
+    tag: "div",
+    icon: {
+      tag: "standard_icon",
+      token: iconToken,
+      color: "grey",
+    },
+    text: {
+      tag: "plain_text",
+      text_color: "grey",
+      text_size: "notation",
+      content: text,
+    },
+  };
+}

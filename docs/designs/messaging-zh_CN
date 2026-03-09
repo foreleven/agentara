@@ -1,0 +1,46 @@
+# Messaging - Message Gateway 与 Message Channel
+
+## 名词解释
+
+### IM App
+
+如飞书、Slack 等。第一期只支持飞书。
+
+### Chat（聊天）
+
+一个 Chat 代表一个用户与 Agent 的对话，或一个群聊对话。第一期只支持单聊。
+
+### Thread（线索）
+
+一个 Thread 代表 Chat 内的一个消息线。对应于 @/kernel/sessioning 中的一个 Session。
+
+### Message Channel
+
+Message Channel 是用于接收或发送 inbound 和 outbound 消息的系统。
+
+### Inbound Message
+
+Inbound Message 是指用户从 IM 软件发送文本、图片、文件或图文消息给 Agent。第一期只支持文本消息。
+
+一条 Inbound Message 包含下列属性：
+
+- message_id：IM 软件分配的 Message ID
+- chat_id：消息所属的会话 ID
+- thread_id：可能为空。如果是一条全新的消息，则 thread_id 为空。否则为当前消息所在的 thread 的 ID。一个 thread_id 对应一个 session_id。
+
+### Outbound Message
+
+Outbound Message 是指 Agent 回复给用户的富文本消息。该消息支持 streaming 模式，不断更新自我。
+
+## Messaging
+
+当用户通过飞书发送了一条消息到飞书机器人时：
+
+- FeishuMessageChannel 通过 WSClient 将会收到 `im.message.receive_v1` 事件，该事件包含一条 Inbound Message 的数据。FeishuMessageChannel 负责解析出 Inbound Message 的数据，并将其转换为 MessageChannel 的 `message` 事件
+- Kernel 收到来自 MessageChannel 的 `message` 事件后，打包为 InboundMessageTaskPayload，并为其创建一个 session_id（如果没有），然后通过 taskManager.dispatch() 将其立刻压入任务队列中。
+- 当队列里的该任务被调度执行时，Kernel 的 _inboundMessageHandler 将会因此被触发，并开始响应。
+  - 在 Kernel 里，通过 MessageChannel 先创建一条消息，并将其作为我们解析来的 Outbound Message 进行流式输出。
+  - 通过 sessionManager.resolveSession() 获取或创建一个 session_id 对应的 session 实例。
+  - 通过 session.stream() 开始响应。
+    - 在循环里，不断将新的 Message 的 content 部分拼到 Outbound Message 的 content 部分，并将其通过 MessageChannel.updateMessage() 更新到用户。
+  - 当 session.stream() 完成时，Kernel 的 _inboundMessageHandler 将会结束响应。

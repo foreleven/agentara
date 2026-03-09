@@ -19,7 +19,7 @@ export class DummyAgentRunner implements AgentRunner {
   async *stream(
     userMessage: UserMessage,
   ): AsyncIterableIterator<SystemMessage | AssistantMessage | ToolMessage> {
-    await Bun.sleep(8500);
+    await Bun.sleep(500);
     yield {
       id: userMessage.id,
       session_id: userMessage.session_id,

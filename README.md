@@ -18,6 +18,7 @@ You can call me **Tara** for short.
 
 - **Agent-powered sessions** — Interact with Claude Code through managed sessions with full streaming support
 - **Multi-channel messaging** — Receive and respond to messages from multiple channels (e.g. Feishu/Lark)
+- **Message streaming** — Streaming response for IM channel (if supported message updating/patching, e.g. Feishu)
 - **Task scheduling** — Queue-based task dispatcher with per-session serial execution and cross-session concurrency
 - **Cron jobs** — Schedule recurring tasks with cron patterns
 - **Session persistence** — Sessions stored as JSONL files with full message history

@@ -404,6 +404,50 @@ export class TaskDispatcher {
   }
 
   /**
+   * Remove a task by ID. For pending jobs, removes from the queue.
+   * Always deletes the persisted task row. For one-shot scheduled tasks,
+   * also removes the scheduler row.
+   * @param taskId - The task (job) ID to remove.
+   * @throws Error if no task exists with the given ID.
+   */
+  async removeTask(taskId: string): Promise<void> {
+    const row = this._db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId))
+      .get();
+    if (!row) {
+      throw new Error(`Task not found: ${taskId}`);
+    }
+    try {
+      await this._queue.removeAsync(taskId);
+    } catch {
+      // Job may have run or been removed
+    }
+    this._db.delete(tasks).where(eq(tasks.id, taskId)).run();
+
+    // Clean up one-shot scheduled task row if this job was its delayed job
+    const oneShot = this._db
+      .select()
+      .from(scheduledTasks)
+      .all()
+      .find(
+        (r) => (r.schedule as { _job_id?: string })?._job_id === taskId,
+      ) as ScheduledTaskRow | undefined;
+    if (oneShot) {
+      this._db
+        .delete(scheduledTasks)
+        .where(eq(scheduledTasks.id, oneShot.id))
+        .run();
+      this._logger.info(
+        { scheduler_id: oneShot.id },
+        "one-shot scheduled task removed with task",
+      );
+    }
+    this._logger.info({ task_id: taskId }, "task removed");
+  }
+
+  /**
    * Query tasks across every state, sorted by creation time descending.
    * Unlike bunqueue's in-memory query, this reads from the persisted
    * `tasks` table and survives process restarts.

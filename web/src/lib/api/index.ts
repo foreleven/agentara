@@ -9,6 +9,7 @@ export {
   useSkills,
   useSoulMemory,
   useSoulMemoryUpdate,
+  useTaskDelete,
   useTaskDispatch,
   useTasks,
   useUserMemory,

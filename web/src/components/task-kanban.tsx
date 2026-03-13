@@ -1,7 +1,9 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import type { Task } from "agentara";
 import dayjs from "dayjs";
+import { Trash2 } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/tooltip";
 import {
   Card,
@@ -41,13 +43,22 @@ interface TaskCardProps {
   task: Task;
   lane: (typeof lanes)[number];
   onCopyTaskId: (taskId: string) => void;
+  onDeleteTask: (taskId: string) => void;
+  isDeleting?: boolean;
 }
 
-function TaskCard({ task, lane, onCopyTaskId }: TaskCardProps) {
+function TaskCard({
+  task,
+  lane,
+  onCopyTaskId,
+  onDeleteTask,
+  isDeleting,
+}: TaskCardProps) {
   return (
     <Card className="bg-sidebar-accent text-white py-2 hover:bg-sidebar-accent/50">
       <CardHeader className="px-4">
-        <Tooltip content="Click to copy">
+        <div className="flex items-start justify-between gap-2">
+          <Tooltip content="Click to copy">
           <button
             type="button"
             onClick={(e) => {
@@ -60,6 +71,24 @@ function TaskCard({ task, lane, onCopyTaskId }: TaskCardProps) {
             # {firstPartOfUUID(task.id)}...
           </button>
         </Tooltip>
+          <Tooltip content="Delete task">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-7 shrink-0 text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted-foreground/10"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDeleteTask(task.id);
+              }}
+              disabled={isDeleting}
+              aria-label="Delete task"
+            >
+              <Trash2 className="size-3.5" />
+            </Button>
+          </Tooltip>
+        </div>
         <CardTitle
           className="text-sm font-normal"
           style={{
@@ -89,6 +118,8 @@ interface TaskKanbanLaneProps {
   lane: (typeof lanes)[number];
   tasks: Task[];
   onCopyTaskId: (taskId: string) => void;
+  onDeleteTask: (taskId: string) => void;
+  deletingTaskId: string | null;
 }
 
 function TaskKanbanLaneSkeleton({ cardCount }: { cardCount: number }) {
@@ -116,7 +147,13 @@ function TaskKanbanLaneSkeleton({ cardCount }: { cardCount: number }) {
   );
 }
 
-function TaskKanbanLane({ lane, tasks, onCopyTaskId }: TaskKanbanLaneProps) {
+function TaskKanbanLane({
+  lane,
+  tasks,
+  onCopyTaskId,
+  onDeleteTask,
+  deletingTaskId,
+}: TaskKanbanLaneProps) {
   const [parent] = useAutoAnimate();
   return (
     <Card className="flex-1 py-4 bg-sidebar rounded-lg gap-0 pb-0">
@@ -139,6 +176,8 @@ function TaskKanbanLane({ lane, tasks, onCopyTaskId }: TaskKanbanLaneProps) {
                 task={task}
                 lane={lane}
                 onCopyTaskId={onCopyTaskId}
+                onDeleteTask={onDeleteTask}
+                isDeleting={deletingTaskId === task.id}
               />
             ))}
           </div>
@@ -153,11 +192,15 @@ export function TaskKanban({
   tasks,
   isLoading,
   onCopyTaskId,
+  onDeleteTask,
+  deletingTaskId,
 }: {
   className?: string;
   tasks: Task[];
   isLoading?: boolean;
   onCopyTaskId: (taskId: string) => void;
+  onDeleteTask: (taskId: string) => void;
+  deletingTaskId?: string | null;
 }) {
   if (isLoading) {
     return (
@@ -189,6 +232,8 @@ export function TaskKanban({
               lane={lane}
               tasks={filteredTasks}
               onCopyTaskId={onCopyTaskId}
+              onDeleteTask={onDeleteTask}
+              deletingTaskId={deletingTaskId ?? null}
             />
           );
         })}

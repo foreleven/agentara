@@ -1,5 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 
 import { kernel } from "@/kernel";
 import { InboundMessageTaskPayload } from "@/shared";
@@ -11,6 +12,18 @@ export const taskRoutes = new Hono()
   .get("/", (c) => {
     const tasks = kernel.taskDispatcher.queryTasks();
     return c.json(tasks);
+  })
+  .delete("/:id", async (c) => {
+    const id = c.req.param("id");
+    try {
+      await kernel.taskDispatcher.removeTask(id);
+      return c.body(null, 204);
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith("Task not found:")) {
+        throw new HTTPException(404, { message: err.message });
+      }
+      throw err;
+    }
   })
   .post(
     "/dispatch",

@@ -9,7 +9,7 @@ import {
   EmptyTitle,
   EmptyDescription,
 } from "@/components/ui/empty";
-import { useTasks } from "@/lib/api";
+import { useTaskDelete, useTasks } from "@/lib/api";
 
 import { TaskKanban } from "../../components/task-kanban";
 
@@ -19,9 +19,16 @@ export const Route = createFileRoute("/tasks/")({
 
 function TasksPage() {
   const { data: tasks, isLoading } = useTasks({ refreshInterval: 3000 });
+  const deleteTask = useTaskDelete();
   const handleCopyTaskId = async (taskId: string) => {
     await navigator.clipboard.writeText(taskId);
     toast.info("Task ID copied to clipboard");
+  };
+  const handleDeleteTask = (taskId: string) => {
+    deleteTask.mutate(taskId, {
+      onSuccess: () => toast.success("Task deleted"),
+      onError: (err) => toast.error(err instanceof Error ? err.message : "Delete failed"),
+    });
   };
   if (!isLoading && (!tasks || tasks.length === 0)) {
     return (
@@ -44,6 +51,8 @@ function TasksPage() {
       tasks={tasks ?? []}
       isLoading={isLoading}
       onCopyTaskId={handleCopyTaskId}
+      onDeleteTask={handleDeleteTask}
+      deletingTaskId={deleteTask.isPending ? deleteTask.variables : null}
     />
   );
 }

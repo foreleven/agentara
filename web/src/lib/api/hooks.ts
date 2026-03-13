@@ -101,6 +101,27 @@ export function useTasks(options?: { refreshInterval?: number }) {
 }
 
 /**
+ * Deletes a task by ID.
+ */
+export function useTaskDelete() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (taskId: string) => {
+      const res = await api.tasks[":id"].$delete({
+        param: { id: taskId },
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Delete failed: ${res.status} ${text}`);
+      }
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+  });
+}
+
+/**
  * Dispatches a new inbound message task.
  */
 export function useTaskDispatch() {}

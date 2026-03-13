@@ -86,12 +86,30 @@ The backend runs on `http://localhost:1984` and the frontend dev server on `http
 
 ### Config File
 
-A `config.yaml` is auto-generated at `$AGENTARA_HOME/config.yaml` on first run. Key fields:
+A `config.yaml` is auto-generated at `$AGENTARA_HOME/config.yaml` on first run. Here is an example:
 
-| Field | Description | Default |
-|-------|-------------|---------|
-| `default_agent` | Agent runner to use | `claude-code` |
-| `agent_model` | Model for the agent | `claude-sonnet-4-6` |
+```yaml
+agents:
+  default:
+    type: claude          # Agent runner to use
+
+tasking:
+  max_retries: 1          # Max attempts per task before marking as failed
+
+messaging:
+  default_channel_id: 9e3eae94-fe88-4043-af40-e7f88943a370  # Change it to yours
+  channels:
+    - id: 9e3eae94-fe88-4043-af40-e7f88943a370 # Unique ID for the channel
+      type: feishu
+      name: Tara
+      description: Tara's default channel
+      params:
+        app_id: $FEISHU_APP_ID       # Resolved from environment variable
+        app_secret: $FEISHU_APP_SECRET
+        chat_id: oc_xxxxxxxxxxxxx
+```
+
+String values starting with `$` are automatically resolved from environment variables at load time. All fields are validated with Zod on startup — missing or invalid values will produce a clear error.
 
 ### Directory Structure
 

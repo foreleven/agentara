@@ -50,6 +50,8 @@ If unsure, ask the user: "Should each trigger run independently, or do you need 
 
 Use `Bash` to run `curl` commands against the API. All examples below use `localhost:1984`.
 
+> **IMPORTANT**: Never pipe write operations (POST/PUT/DELETE) through `jq`. If `jq` fails to parse the response, the `curl` request has still been sent and executed server-side. Retrying the command will create duplicates or cause unintended side effects. Only use `| jq .` for read operations (GET). For write operations, output the raw response directly.
+
 ---
 
 ## API Reference
@@ -59,6 +61,8 @@ Use `Bash` to run `curl` commands against the API. All examples below use `local
 ```bash
 curl -s http://localhost:1984/api/cronjobs | jq .
 ```
+
+> `jq` is safe here because GET is read-only. Never use `| jq .` on POST/PUT/DELETE commands.
 
 ### Create — independent (no session_id)
 
@@ -72,7 +76,7 @@ curl -s -X POST http://localhost:1984/api/cronjobs \
   -d '{
     "instruction": "Summarize today'\''s top tech news",
     "schedule": { "pattern": "0 9 * * *" }
-  }' | jq .
+  }'
 ```
 
 **Interval** (every 30 minutes):
@@ -83,7 +87,7 @@ curl -s -X POST http://localhost:1984/api/cronjobs \
   -d '{
     "instruction": "Check all services are healthy",
     "schedule": { "every": 1800000 }
-  }' | jq .
+  }'
 ```
 
 **Cron + limit** (every Friday 6 PM, max 10 times):
@@ -94,7 +98,7 @@ curl -s -X POST http://localhost:1984/api/cronjobs \
   -d '{
     "instruction": "Generate weekly project report",
     "schedule": { "pattern": "0 18 * * 5", "limit": 10 }
-  }' | jq .
+  }'
 ```
 
 **Interval + immediately** (every hour, first run right now):
@@ -105,7 +109,7 @@ curl -s -X POST http://localhost:1984/api/cronjobs \
   -d '{
     "instruction": "Sync upstream repository changes",
     "schedule": { "every": 3600000, "immediately": true }
-  }' | jq .
+  }'
 ```
 
 **Delay** (one-shot after 10 minutes):
@@ -116,7 +120,7 @@ curl -s -X POST http://localhost:1984/api/cronjobs \
   -d '{
     "instruction": "Remind me to review the report",
     "schedule": { "delay": 600000 }
-  }' | jq .
+  }'
 ```
 
 **All schedule options** (cron + interval + limit + immediately):
@@ -132,7 +136,7 @@ curl -s -X POST http://localhost:1984/api/cronjobs \
       "limit": 30,
       "immediately": true
     }
-  }' | jq .
+  }'
 ```
 
 ### Create — contextual (with session_id)
@@ -152,7 +156,7 @@ curl -s -X POST http://localhost:1984/api/cronjobs \
     \"session_id\": \"$SESSION_ID\",
     \"instruction\": \"Check project progress, compare with yesterday, and flag blockers\",
     \"schedule\": { \"pattern\": \"0 9 * * 1-5\" }
-  }" | jq .
+  }"
 ```
 
 ### Update a scheduled task
@@ -165,13 +169,13 @@ curl -s -X PUT http://localhost:1984/api/cronjobs/<scheduled-task-id> \
   -d '{
     "instruction": "Updated instruction here",
     "schedule": { "pattern": "0 8 * * *" }
-  }' | jq .
+  }'
 ```
 
 ### Delete a scheduled task
 
 ```bash
-curl -s -X DELETE http://localhost:1984/api/cronjobs/<scheduled-task-id> | jq .
+curl -s -X DELETE http://localhost:1984/api/cronjobs/<scheduled-task-id>
 ```
 
 ---

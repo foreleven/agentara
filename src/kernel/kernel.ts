@@ -88,9 +88,9 @@ class Kernel {
         new FeishuMessageChannel(
           channel.id,
           {
-            chatId: channel.params.chat_id,
-            appId: channel.params.app_id,
-            appSecret: channel.params.app_secret,
+            chatId: channel.params.chat_id!,
+            appId: channel.params.app_id!,
+            appSecret: channel.params.app_secret!,
           },
           this._database.db,
         ),

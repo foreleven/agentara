@@ -1,28 +1,87 @@
-import * as paths from "./paths";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
+import { resolveEnvVars } from "./env-resolver";
+import * as paths from "./paths";
+import type { AppConfig } from "./schema";
+import { AppConfig as AppConfigSchema } from "./schema";
+
+export type {
+  AgentConfig,
+  AgentsConfig,
+  AppConfig,
+  ChannelConfig,
+  ChannelParams,
+  MessagingConfig,
+  TaskingConfig,
+} from "./schema";
+
+/**
+ * Combined configuration interface including both YAML-loaded app config and paths.
+ */
+export interface Config extends AppConfig {
+  paths: typeof paths;
+}
+
+let _appConfig: AppConfig | null = null;
+
+/**
+ * Loads the application configuration from `$AGENTARA_HOME/config.yaml`.
+ * Parses the YAML, resolves `$ENV_VAR` references, and validates against the schema.
+ */
+function _loadConfigFromFile(): AppConfig {
+  const configPath = join(paths.home, "config.yaml");
+  const raw = readFileSync(configPath, "utf-8");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Bun.YAML.parse is not yet in TS types
+  const parsed = (Bun as any).YAML.parse(raw);
+  const resolved = resolveEnvVars(parsed);
+  return AppConfigSchema.parse(resolved);
+}
+
+/**
+ * Reloads the application configuration from disk.
+ * Call this after generating or modifying `config.yaml`.
+ */
+export function reloadConfig(): void {
+  _appConfig = _loadConfigFromFile();
+  console.info(_appConfig);
+}
+
+// Attempt initial load — swallow error so boot-loader can use config.paths before yaml exists.
+try {
+  _appConfig = _loadConfigFromFile();
+} catch {
+  // config.yaml may not exist yet; boot-loader will call reloadConfig() after generating it.
+}
+
+/**
+ * The global application configuration object.
+ * `paths` is always available. Other properties require `config.yaml` to be loaded.
+ */
 export const config = {
-  agents: {
-    default: { type: "claude" },
+  get agents() {
+    if (!_appConfig) {
+      throw new Error(
+        "config.yaml has not been loaded yet. Call reloadConfig() first.",
+      );
+    }
+    return _appConfig.agents;
   },
-  tasking: {
-    /** Maximum number of attempts per job before it is marked as failed. Defaults to 1 (no retries). */
-    max_retries: 1,
+  get tasking() {
+    if (!_appConfig) {
+      throw new Error(
+        "config.yaml has not been loaded yet. Call reloadConfig() first.",
+      );
+    }
+    return _appConfig.tasking;
   },
-  messaging: {
-    default_channel_id: "9e3eae94-fe88-4043-af40-e7f88943a370", // Falls back to channels[0]?.id when empty
-    channels: [
-      {
-        id: "9e3eae94-fe88-4043-af40-e7f88943a370",
-        type: "feishu",
-        name: "Tara",
-        description: "Tara's default channel",
-        params: {
-          app_id: Bun.env.FEISHU_APP_ID!,
-          app_secret: Bun.env.FEISHU_APP_SECRET!,
-          chat_id: "oc_0571b524e6fe1b7191fd4af3e3fe2a5d",
-        },
-      },
-    ],
+  get messaging() {
+    if (!_appConfig) {
+      throw new Error(
+        "config.yaml has not been loaded yet. Call reloadConfig() first.",
+      );
+    }
+    return _appConfig.messaging;
   },
   paths,
 };

@@ -1,6 +1,7 @@
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
-import { config, createLogger } from "@/shared";
+import { config, createLogger, reloadConfig } from "@/shared";
 
 const logger = createLogger("boot-loader");
 
@@ -17,13 +18,29 @@ class BootLoader {
   }
 
   private async _verifyIntegrity(): Promise<void> {
-    // TODO:
-    // Checking if the `$AGENTARA_HOME` directory exists
-    // - If not, create it, and copy everything from `./user-home` to `$AGENTARA_HOME`
-    // - Initialize `config.yaml` with the default values
     if (!existsSync(config.paths.home)) {
-      // Create the home directory
+      mkdirSync(config.paths.home, { recursive: true });
     }
+
+    const configPath = join(config.paths.home, "config.yaml");
+    if (!existsSync(configPath)) {
+      logger.info("config.yaml not found, generating default configuration...");
+      const defaultConfig = `agents:
+  default:
+    type: claude
+
+tasking:
+  max_retries: 1
+
+messaging:
+  default_channel_id: ""
+  channels: []
+`;
+      writeFileSync(configPath, defaultConfig, "utf-8");
+    }
+
+    reloadConfig();
+
     if (!existsSync(config.paths.data)) {
       mkdirSync(config.paths.data, { recursive: true });
     }

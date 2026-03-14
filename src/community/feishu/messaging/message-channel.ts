@@ -299,7 +299,6 @@ export class FeishuMessageChannel
         text: json.text,
       };
     } else if (type === "post") {
-      console.info(JSON.stringify(json, null, 2));
       const markdown = convertPostToMarkdown(json);
       return {
         type: "text",

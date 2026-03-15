@@ -62,7 +62,7 @@ Goal: Get the **top 5 repositories** from GitHub Trending (daily, default langua
 
 ---
 
-### Step 4: Fetch & Curate News
+### Step 4: Fetch & Curate News and Podcasts
 
 This is the most editorial step. Gather news from multiple sources, then apply strict curation rules.
 
@@ -92,6 +92,17 @@ Before finalizing the news list, apply these filters strictly:
 - **Significance**: Would the user want to be interrupted to learn about this? If not, skip it.
 - **Deduplication**: Check against the user's recent Pulse outputs (use `conversation_search` with keyword "Pulse" to find recent briefings). Do NOT include a story that appeared in a recent Pulse. If unsure, include it but note it as a developing story.
 - **Result**: Aim for **3–8 news items total** across all sub-categories. Fewer is better than padding.
+
+#### 4e: Fetch Podcasts
+
+1. `web_fetch` the following podcasts to see if there are any updates:
+   - [硅谷101](https://www.xiaoyuzhoufm.com/podcast/5e5c52c9418a84a04625e6cc)
+   - [罗永浩的十字路口](https://www.xiaoyuzhoufm.com/podcast/68981df29e7bcd326eb91d88)
+   - [十字路口 Crossing](https://www.xiaoyuzhoufm.com/podcast/60502e253c92d4f62c2a9577)
+   - [晚点聊](https://www.xiaoyuzhoufm.com/podcast/61933ace1b4320461e91fd55)
+   - [elsewhere别处发生](https://www.xiaoyuzhoufm.com/podcast/68ff657d9c745a6e69da8fcf)
+
+2. Only select the podcasts which updated in the last 48 hours.
 
 ---
 
@@ -166,6 +177,17 @@ Description。{Language}。简短点评（简体中文）。
 
 (3–8 items, or fewer if it's a quiet day)
 
+---
+
+## Podcasts (If exists updates)
+
+- **[Podcast Name](URL)**
+简短介绍与点评（简体中文）。
+
+- **[Podcast Name](URL)**
+...
+
+(1-3 items)
 ---
 
 ## Weather

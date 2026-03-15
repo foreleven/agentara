@@ -28,9 +28,10 @@ Extract a prioritized list of **watchlist topics**. Typical categories:
 
 ## Step 2: Read News
 
-Read the latest news from the following sources:
+Read the latest news and trending topics from the following sources:
 - [Hacker News](https://hnrss.org/newest)
 - [Product Hunt](https://www.producthunt.com/feed)
+- [GitHub Trending](https://github.com/trending?since=daily)
 - [Google News](https://news.google.com/rss?hl=zh-CN&gl=CN&ceid=CN:zh-Hans)
 
 Find the most relevant news for the user's profile and watchlist topics.
@@ -40,8 +41,9 @@ Find the most relevant news for the user's profile and watchlist topics.
 For each high-priority watchlist topic (aim for 3-5 topics, no more than 8), perform a focused web search. Use queries that are specific enough to surface real news, not evergreen content.
 
 Good search patterns:
-- `"ByteDance" news this week` — catches employer news
-- `"BABA stock" today` — catches daily movers
+- `"ByteDance" news March 3 2026` — catches employer news
+- `小荷 AI health news March 3 2026` — catches project news
+- `"BABA stock" March 3 2026` — catches daily movers
 - `"LangChain" release 2026` — catches recent releases
 - `"Claude" OR "Anthropic" announcement` — catches AI tooling updates
 

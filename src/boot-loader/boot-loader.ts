@@ -44,6 +44,12 @@ class BootLoader {
     if (!existsSync(config.paths.claude_home)) {
       mkdirSync(config.paths.claude_home, { recursive: true });
     }
+    if (!existsSync(join(config.paths.claude_home, "settings.json"))) {
+      await downloadFile(
+        "https://raw.githubusercontent.com/magiccube/agentara/main/user-home/.claude/settings.json",
+        join(config.paths.claude_home, "settings.json"),
+      );
+    }
     if (!existsSync(join(config.paths.home, "CLAUDE.md"))) {
       await downloadFile(
         "https://raw.githubusercontent.com/magiccube/agentara/main/user-home/CLAUDE.md",

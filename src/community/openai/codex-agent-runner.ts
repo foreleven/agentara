@@ -1,6 +1,7 @@
 import {
   config,
   extractTextContent,
+  uuid,
   type ToolMessage,
   type AgentRunner,
   type AgentRunOptions,
@@ -52,7 +53,6 @@ export class CodexAgentRunner implements AgentRunner {
       cwd: options.cwd,
       env: {
         ...Bun.env,
-        OPENAI_API_KEY: "",
       },
       stderr: "pipe",
     });
@@ -158,7 +158,7 @@ export class CodexAgentRunner implements AgentRunner {
         const errorMsg = event.error?.message ?? "Unknown turn failure";
         return [
           {
-            id: `error-${Date.now()}`,
+            id: uuid(),
             session_id: sessionId,
             role: "assistant" as const,
             content: [{ type: "text" as const, text: `Error: ${errorMsg}` }],
@@ -170,7 +170,7 @@ export class CodexAgentRunner implements AgentRunner {
         const errorMsg = event.message ?? "Unknown stream error";
         return [
           {
-            id: `error-${Date.now()}`,
+            id: uuid(),
             session_id: sessionId,
             role: "assistant" as const,
             content: [{ type: "text" as const, text: `Error: ${errorMsg}` }],
@@ -191,7 +191,7 @@ export class CodexAgentRunner implements AgentRunner {
     const item = event.item;
     if (!item) return [];
 
-    const itemId: string = item.id ?? `item-${Date.now()}`;
+    const itemId: string = item.id ?? uuid();
     const itemType: string | undefined = item.type;
     const eventType: string = event.type;
 

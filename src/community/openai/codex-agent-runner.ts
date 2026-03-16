@@ -1,6 +1,11 @@
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+
 import {
   config,
+  createLogger,
   extractTextContent,
+  resolveInstructionFile,
   uuid,
   type ToolMessage,
   type AgentRunner,
@@ -9,6 +14,8 @@ import {
   type SystemMessage,
   type UserMessage,
 } from "@/shared";
+
+const logger = createLogger("codex-agent-runner");
 
 /**
  * The agent runner for OpenAI Codex CLI.
@@ -28,6 +35,12 @@ export class CodexAgentRunner implements AgentRunner {
     const textContentOfUserMessage = JSON.stringify(
       extractTextContent(message),
     );
+
+    // Sync CLAUDE.md → AGENTS.md so Codex CLI picks up the same instructions
+    // that Claude Code reads natively.
+    if (isNew) {
+      this._syncAgentsMd(options.cwd);
+    }
 
     const args = isNew
       ? [
@@ -390,5 +403,27 @@ export class CodexAgentRunner implements AgentRunner {
       default:
         return [];
     }
+  }
+
+  /**
+   * Reads `CLAUDE.md` from `cwd`, resolves any `@path/file` imports, and
+   * writes the result as `AGENTS.md` so the Codex CLI can pick it up as its
+   * native instruction file.
+   */
+  private _syncAgentsMd(cwd: string): void {
+    const claudeMdPath = join(cwd, "CLAUDE.md");
+    if (!existsSync(claudeMdPath)) {
+      return;
+    }
+
+    const resolved = resolveInstructionFile(claudeMdPath, cwd);
+    if (!resolved) {
+      return;
+    }
+
+    const agentsMdPath = join(cwd, "AGENTS.md");
+    mkdirSync(cwd, { recursive: true });
+    writeFileSync(agentsMdPath, resolved, "utf-8");
+    logger.info("Synced CLAUDE.md → AGENTS.md (with resolved imports)");
   }
 }

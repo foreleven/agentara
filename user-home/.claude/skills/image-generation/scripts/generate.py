@@ -8,10 +8,10 @@ from PIL import Image
 def validate_image(image_path: str) -> bool:
     """
     Validate if an image file can be opened and is not corrupted.
-    
+
     Args:
         image_path: Path to the image file
-        
+
     Returns:
         True if the image is valid and can be opened, False otherwise
     """
@@ -37,7 +37,7 @@ def generate_image(
         prompt = f.read()
     parts = []
     i = 0
-    
+
     # Filter out invalid reference images
     valid_reference_images = []
     for ref_img in reference_images:
@@ -45,10 +45,12 @@ def generate_image(
             valid_reference_images.append(ref_img)
         else:
             print(f"Skipping invalid reference image: {ref_img}")
-    
+
     if len(valid_reference_images) < len(reference_images):
-        print(f"Note: {len(reference_images) - len(valid_reference_images)} reference image(s) were skipped due to validation failure.")
-    
+        print(
+            f"Note: {len(reference_images) - len(valid_reference_images)} reference image(s) were skipped due to validation failure."
+        )
+
     for reference_image in valid_reference_images:
         i += 1
         with open(reference_image, "rb") as f:
@@ -75,6 +77,7 @@ def generate_image(
             "generationConfig": {"imageConfig": {"aspectRatio": aspect_ratio}},
             "contents": [{"parts": [*parts, {"text": prompt}]}],
         },
+        timeout=90,
     )
     response.raise_for_status()
     json = response.json()

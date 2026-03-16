@@ -175,3 +175,4 @@ After generation:
 - Reference images enhance generation quality significantly
 - Iterative refinement is normal for optimal results
 - For character generation, include the detailed character object plus a consolidated prompt field
+- Retry 3 times if the the `scripts/generate.py` fails. Exponential backoff and retry.

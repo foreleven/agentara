@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import {
@@ -422,7 +422,6 @@ export class CodexAgentRunner implements AgentRunner {
     }
 
     const agentsMdPath = join(cwd, "AGENTS.md");
-    mkdirSync(cwd, { recursive: true });
     writeFileSync(agentsMdPath, resolved, "utf-8");
     logger.info("Synced CLAUDE.md → AGENTS.md (with resolved imports)");
   }

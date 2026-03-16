@@ -36,11 +36,9 @@ export class CodexAgentRunner implements AgentRunner {
       extractTextContent(message),
     );
 
-    // Sync CLAUDE.md → AGENTS.md so Codex CLI picks up the same instructions
-    // that Claude Code reads natively.
-    if (isNew) {
-      this._syncAgentsMd(options.cwd);
-    }
+    // Sync CLAUDE.md → AGENTS.md on every invocation so Codex CLI always
+    // picks up the latest content (e.g. updated @memory/USER.md).
+    this._syncAgentsMd(options.cwd);
 
     const args = isNew
       ? [

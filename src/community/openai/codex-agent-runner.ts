@@ -356,6 +356,18 @@ export class CodexAgentRunner implements AgentRunner {
               },
             ],
           },
+          {
+            id: `${itemId}-result`,
+            session_id: sessionId,
+            role: "tool" as const,
+            content: [
+              {
+                type: "tool_result" as const,
+                tool_use_id: itemId,
+                content: `Web search completed for: ${item.query ?? ""}`,
+              },
+            ],
+          },
         ];
       }
 

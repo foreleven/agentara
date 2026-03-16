@@ -234,7 +234,7 @@ describe("CodexAgentRunner._parseStreamLine", () => {
       },
     });
     const msgs = parse(line);
-    expect(msgs).toHaveLength(1);
+    expect(msgs).toHaveLength(2);
     expect(msgs[0]).toMatchObject({
       id: "ws-1",
       session_id: SESSION_ID,
@@ -245,6 +245,18 @@ describe("CodexAgentRunner._parseStreamLine", () => {
           name: "WebSearch",
           id: "ws-1",
           input: { query: "TypeScript best practices" },
+        },
+      ],
+    });
+    expect(msgs[1]).toMatchObject({
+      id: "ws-1-result",
+      session_id: SESSION_ID,
+      role: "tool",
+      content: [
+        {
+          type: "tool_result",
+          tool_use_id: "ws-1",
+          content: "Web search completed for: TypeScript best practices",
         },
       ],
     });

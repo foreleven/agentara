@@ -1,5 +1,11 @@
 import { execSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 
 import { config, createLogger, reloadConfig } from "@/shared";
@@ -60,6 +66,10 @@ class BootLoader {
       await downloadSkills();
     }
 
+    // Symlink .agents/skills → .claude/skills so the Codex CLI can also
+    // read skills.  Only created once; subsequent boots see the existing link.
+    this._ensureSkillsSymlink();
+
     const configPath = join(config.paths.home, "config.yaml");
     if (!existsSync(configPath)) {
       logger.info("config.yaml not found, generating default configuration...");
@@ -86,6 +96,26 @@ messaging:
 
     if (!existsSync(config.paths.data)) {
       mkdirSync(config.paths.data, { recursive: true });
+    }
+  }
+
+  /**
+   * Creates a symlink at `.agents/skills` → `.claude/skills` so the Codex
+   * CLI can discover skills via its native directory.  The link is only
+   * created once; if it already exists no action is taken.
+   */
+  private _ensureSkillsSymlink(): void {
+    const linkPath = join(config.paths.agents_home, "skills");
+    try {
+      // Already a symlink (or file/dir) — nothing to do.
+      if (existsSync(linkPath)) {
+        return;
+      }
+      mkdirSync(config.paths.agents_home, { recursive: true });
+      symlinkSync(config.paths.skills, linkPath);
+      logger.info("Created symlink .agents/skills → .claude/skills");
+    } catch (err) {
+      logger.warn({ err }, "Failed to create .agents/skills symlink");
     }
   }
 

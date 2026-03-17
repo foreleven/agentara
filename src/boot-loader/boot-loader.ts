@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
 import {
   existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   symlinkSync,
@@ -108,8 +109,14 @@ messaging:
     const linkPath = join(config.paths.agents_home, "skills");
     try {
       // Already a symlink (or file/dir) — nothing to do.
-      if (existsSync(linkPath)) {
+      try {
+        lstatSync(linkPath);
         return;
+      } catch (e: any) {
+        if (e?.code !== "ENOENT") {
+          throw e;
+        }
+        // Path truly does not exist; fall through to create it.
       }
       mkdirSync(config.paths.agents_home, { recursive: true });
       symlinkSync(config.paths.skills, linkPath, "dir");

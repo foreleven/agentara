@@ -7,12 +7,27 @@ LOG_DIR="$PROJECT_DIR/.run/logs"
 
 mkdir -p "$RUN_DIR" "$LOG_DIR"
 
-# Check if already running
+# Check if either process is already running
+server_running=false
+web_running=false
+
 if [ -f "$RUN_DIR/server.pid" ] && kill -0 "$(cat "$RUN_DIR/server.pid")" 2>/dev/null; then
-  echo "Agentara is already running (server PID: $(cat "$RUN_DIR/server.pid"))"
+  server_running=true
+fi
+if [ -f "$RUN_DIR/web.pid" ] && kill -0 "$(cat "$RUN_DIR/web.pid")" 2>/dev/null; then
+  web_running=true
+fi
+
+if [ "$server_running" = true ] || [ "$web_running" = true ]; then
+  echo "Agentara is already running:"
+  [ "$server_running" = true ] && echo "  server PID: $(cat "$RUN_DIR/server.pid")"
+  [ "$web_running" = true ]    && echo "  web    PID: $(cat "$RUN_DIR/web.pid")"
   echo "Run 'make down' to stop first."
   exit 1
 fi
+
+# Clean up any stale PID files from previous runs
+rm -f "$RUN_DIR/server.pid" "$RUN_DIR/web.pid"
 
 echo "Starting Agentara in the background..."
 
@@ -34,8 +49,8 @@ WEB_PID=$!
 sleep 1
 if ! kill -0 "$WEB_PID" 2>/dev/null; then
   echo "  Web failed to start. Check .run/logs/web.log for details."
-  kill "$SERVER_PID" 2>/dev/null || true
-  rm -f "$RUN_DIR/server.pid"
+  echo "  Cleaning up server process..."
+  bash "$PROJECT_DIR/scripts/down.sh"
   exit 1
 fi
 echo "$WEB_PID" > "$RUN_DIR/web.pid"

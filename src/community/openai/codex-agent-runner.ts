@@ -80,12 +80,18 @@ export class CodexAgentRunner implements AgentRunner {
       }),
     );
 
+    // Keep only the last 64 KB of stdout for error reporting to avoid
+    // unbounded memory growth during long-running sessions.
+    const MAX_STDOUT_TAIL = 64 * 1024;
     let buffer = "";
-    let stdoutRaw = "";
+    let stdoutRawTail = "";
     for await (const chunk of proc.stdout) {
       const decoded = decoder.decode(chunk, { stream: true });
       buffer += decoded;
-      stdoutRaw += decoded;
+      stdoutRawTail += decoded;
+      if (stdoutRawTail.length > MAX_STDOUT_TAIL * 1.5) {
+        stdoutRawTail = stdoutRawTail.slice(stdoutRawTail.length - MAX_STDOUT_TAIL);
+      }
       const lines = buffer.split("\n");
       buffer = lines.pop()!;
       for (const line of lines) {
@@ -113,8 +119,8 @@ export class CodexAgentRunner implements AgentRunner {
           ? decoder.decode(Bun.concatArrayBuffers(stderrChunks))
           : "";
       const parts: string[] = [];
-      if (stdoutRaw.trim()) {
-        parts.push(`Stdout:\n${stdoutRaw.trim()}`);
+      if (stdoutRawTail.trim()) {
+        parts.push(`Stdout:\n${stdoutRawTail.trim()}`);
       }
       if (stderrText.trim()) {
         parts.push(`Stderr:\n${stderrText.trim()}`);

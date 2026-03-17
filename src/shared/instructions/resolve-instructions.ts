@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { isAbsolute, relative, resolve } from "node:path";
 
 import { createLogger } from "../logging";
 
@@ -71,7 +71,8 @@ export function resolveImports(text: string, baseDir: string): string {
       const absolutePath = resolve(baseDir, relativePath);
 
       // Reject paths that escape baseDir (path traversal).
-      if (!absolutePath.startsWith(resolvedBaseDir + "/")) {
+      const rel = relative(resolvedBaseDir, absolutePath);
+      if (rel.startsWith("..") || isAbsolute(rel)) {
         resolved.push(`<!-- import rejected (outside base dir): ${relativePath} -->`);
         logger.warn(`Import path escapes base dir: @${relativePath}`);
         continue;

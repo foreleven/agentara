@@ -128,7 +128,7 @@ Implements AgentRunner via spawn of `codex exec --json --full-auto` (OpenAI Code
   - Maps `item.completed` with `command_execution` → `ToolMessage` (tool_result)
   - Maps `item.completed` with `file_change` → `AssistantMessage` (tool_use) + `ToolMessage` (tool_result)
   - Maps `item.started/completed` with `mcp_tool_call` → `AssistantMessage`/`ToolMessage`
-  - Maps `item.completed` with `web_search` → `AssistantMessage` (tool_use)
+  - Maps `item.completed` with `web_search` → `AssistantMessage` (tool_use) + `ToolMessage` (tool_result)
 - On non-zero exit: throws `Error`
 
 ### community Files

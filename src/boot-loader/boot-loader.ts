@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { config, createLogger, reloadConfig } from "@/shared";
@@ -58,6 +58,19 @@ class BootLoader {
     }
     if (!existsSync(config.paths.skills)) {
       await downloadSkills();
+    }
+
+    // Create .agents/skills → .claude/skills symlink so Codex CLI can also
+    // read the installed skills.  Only created once; skipped when the link
+    // (or a real directory) already exists.
+    if (!existsSync(config.paths.agents_skills)) {
+      try {
+        mkdirSync(config.paths.agents_home, { recursive: true });
+        symlinkSync(config.paths.skills, config.paths.agents_skills);
+        logger.info("Created symlink .agents/skills → .claude/skills");
+      } catch (err) {
+        logger.warn({ err }, "Failed to create .agents/skills symlink");
+      }
     }
 
     const configPath = join(config.paths.home, "config.yaml");

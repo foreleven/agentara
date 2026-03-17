@@ -2,7 +2,6 @@ import { execSync } from "node:child_process";
 import {
   existsSync,
   lstatSync,
-  lstatSync,
   mkdirSync,
   mkdtempSync,
   symlinkSync,
@@ -111,16 +110,9 @@ messaging:
     try {
       try {
         lstatSync(linkPath);
-      try {
-      } catch (e: any) {
-        if (e?.code !== "ENOENT") {
-          throw e;
-        }
-        // Path truly does not exist; fall through to create it.
-        lstatSync(linkPath);
         return;
-      } catch (e: any) {
-        if (e?.code !== "ENOENT") {
+      } catch (e: unknown) {
+        if ((e as NodeJS.ErrnoException)?.code !== "ENOENT") {
           throw e;
         }
         // Path truly does not exist; fall through to create it.

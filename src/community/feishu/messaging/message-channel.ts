@@ -104,6 +104,14 @@ export class FeishuMessageChannel
 
     const assistantMessage = message as AssistantMessage;
     assistantMessage.id = replyMessage.message_id!;
+
+    if (!streaming) {
+      const lastText = message.content.filter((c) => c.type === "text").pop();
+      if (lastText?.type === "text") {
+        await this._sendLocalFileAttachments(assistantMessage.id, lastText.text);
+      }
+    }
+
     return assistantMessage;
   }
 
@@ -130,6 +138,12 @@ export class FeishuMessageChannel
     const { message_id: messageId } = data;
     const assistantMessage = message as AssistantMessage;
     assistantMessage.id = messageId!;
+
+    const lastText = message.content.filter((c) => c.type === "text").pop();
+    if (lastText?.type === "text") {
+      await this._sendLocalFileAttachments(assistantMessage.id, lastText.text);
+    }
+
     const emojis = [
       "思考中",
       "送你小红花",
@@ -176,6 +190,13 @@ export class FeishuMessageChannel
         content: JSON.stringify(card),
       },
     });
+
+    if (!streaming) {
+      const lastText = message.content.filter((c) => c.type === "text").pop();
+      if (lastText?.type === "text") {
+        await this._sendLocalFileAttachments(message.id, lastText.text);
+      }
+    }
   }
 
   /**
@@ -200,6 +221,49 @@ export class FeishuMessageChannel
       return res.image_key;
     } else {
       throw new Error("Failed to upload image");
+    }
+  }
+
+  /**
+   * Uploads a file to Feishu. Returns the key of the uploaded file.
+   * @param filePath - The path to the file relative to the home directory.
+   * @returns The key of the uploaded file.
+   */
+  async uploadFile(filePath: string): Promise<string> {
+    const absPath = nodePath.join(config.paths.home, filePath);
+    const file = fs.createReadStream(absPath);
+    const fileName = nodePath.basename(absPath);
+    const ext = nodePath.extname(absPath).slice(1).toLowerCase();
+    const fileTypeMap: Record<
+      string,
+      "opus" | "mp4" | "pdf" | "doc" | "xls" | "ppt" | "stream"
+    > = {
+      opus: "opus",
+      mp4: "mp4",
+      pdf: "pdf",
+      doc: "doc",
+      docx: "doc",
+      xls: "xls",
+      xlsx: "xls",
+      ppt: "ppt",
+      pptx: "ppt",
+    };
+    const fileType = fileTypeMap[ext] ?? "stream";
+    this._logger.info(`Uploading file ${absPath} (type: ${fileType})`);
+    const res = await this._client.im.v1.file.create({
+      data: {
+        file_type: fileType,
+        file_name: fileName,
+        file,
+      },
+    });
+    this._logger.info(
+      `Uploaded file ${absPath} -> ${res?.file_key || "failed"}`,
+    );
+    if (res?.file_key) {
+      return res.file_key;
+    } else {
+      throw new Error("Failed to upload file");
     }
   }
 
@@ -265,6 +329,54 @@ export class FeishuMessageChannel
     filename += extname;
     await writeFile(nodePath.join(dir, filename));
     return nodePath.relative(config.paths.home, nodePath.join(dir, filename));
+  }
+
+  /** Extract local file paths from markdown link syntax [text](path) in text. */
+  private _extractLocalFilePaths(text: string): string[] {
+    const linkRegex = /(?<!!)\[.*?\]\(([^)]+)\)/g;
+    const paths: string[] = [];
+    let match: RegExpExecArray | null;
+    while ((match = linkRegex.exec(text)) !== null) {
+      const filePath = match[1];
+      if (
+        filePath &&
+        !filePath.includes("://") &&
+        fs.existsSync(nodePath.join(config.paths.home, filePath))
+      ) {
+        paths.push(filePath);
+      }
+    }
+    return paths;
+  }
+
+  /** Upload local files referenced in text and send them as Feishu file message replies. */
+  private async _sendLocalFileAttachments(
+    messageId: string,
+    text: string,
+  ): Promise<void> {
+    const filePaths = this._extractLocalFilePaths(text);
+    const seen = new Set<string>();
+    for (const filePath of filePaths) {
+      if (seen.has(filePath)) continue;
+      seen.add(filePath);
+      try {
+        const fileKey = await this.uploadFile(filePath);
+        await this._client.im.message.reply({
+          path: { message_id: messageId },
+          data: {
+            msg_type: "file",
+            content: JSON.stringify({ file_key: fileKey }),
+            reply_in_thread: true,
+          },
+        });
+        this._logger.info(`Sent file ${filePath} as Feishu attachment`);
+      } catch (err) {
+        this._logger.warn(
+          { err },
+          `Failed to send file attachment: ${filePath}`,
+        );
+      }
+    }
   }
 
   private _handleMessageReceive = async ({

@@ -112,7 +112,7 @@ messaging:
         return;
       }
       mkdirSync(config.paths.agents_home, { recursive: true });
-      symlinkSync(config.paths.skills, linkPath);
+      symlinkSync(config.paths.skills, linkPath, "dir");
       logger.info("Created symlink .agents/skills → .claude/skills");
     } catch (err) {
       logger.warn({ err }, "Failed to create .agents/skills symlink");

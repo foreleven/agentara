@@ -64,9 +64,13 @@ class BootLoader {
     // read the installed skills.  Only created once; skipped when the link
     // (or a real directory) already exists.
     if (!existsSync(config.paths.agents_skills)) {
-      mkdirSync(config.paths.agents_home, { recursive: true });
-      symlinkSync(config.paths.skills, config.paths.agents_skills);
-      logger.info("Created symlink .agents/skills → .claude/skills");
+      try {
+        mkdirSync(config.paths.agents_home, { recursive: true });
+        symlinkSync(config.paths.skills, config.paths.agents_skills);
+        logger.info("Created symlink .agents/skills → .claude/skills");
+      } catch (err) {
+        logger.warn({ err }, "Failed to create .agents/skills symlink");
+      }
     }
 
     const configPath = join(config.paths.home, "config.yaml");

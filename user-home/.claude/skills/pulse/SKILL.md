@@ -102,12 +102,28 @@ Before finalizing the news list, apply these filters strictly:
    - [晚点聊](https://www.xiaoyuzhoufm.com/podcast/61933ace1b4320461e91fd55)
    - [锦供参考](https://www.xiaoyuzhoufm.com/podcast/69a6aba3de6dd3793a39e06b)
    - [elsewhere别处发生](https://www.xiaoyuzhoufm.com/podcast/68ff657d9c745a6e69da8fcf)
+   - [张小珺Jùn｜商业访谈录](https://www.xiaoyuzhoufm.com/podcast/626b46ea9cbbf0451cf5a962)
+
+> If the user asks for add a new podcast, `web_search` "{podcast name} site:xiaoyuzhoufm.com" and filter the results by "www.xiaoyuzhoufm.com/podcast/{id}" to find the right podcast URL, then add it to the list.
 
 2. Only select the podcasts which updated in the last 48 hours.
 
 ---
 
-### Step 5: Fetch Weather Data
+### Step 5: Fetch Stock Data
+
+Fetch real-time stock prices for BABA on both exchanges.
+
+1. `web_search` for `BABA stock price today` to get the latest US-listed price (NYSE: BABA).
+2. `web_search` for `9988.HK stock price today` to get the latest HK-listed price (HKEX: 9988).
+3. For each, collect:
+   - Current price
+   - Change amount and percentage (+ or -)
+4. Write a one-line 股评 (market comment) based on the day's movement, recent context (earnings dates, macro events), and user's known position.
+
+---
+
+### Step 6: Fetch Weather Data
 
 Fetch the following 3 cities' weather.
 
@@ -125,7 +141,7 @@ For `CITY_ID`:
 
 ---
 
-### Step 6: Check for Deduplication Against Recent Pulses
+### Step 7: Check for Deduplication Against Recent Pulses
 
 Before assembling the final output:
 
@@ -135,7 +151,10 @@ Before assembling the final output:
 
 ---
 
-### Step 7: Assemble Output
+### Step 8: Assemble Output
+
+> **CRITICAL — OUTPUT STARTS WITH THE TITLE, NOTHING ELSE.**
+> Your very first character of output MUST be `#`. No preamble, no status updates, no "数据已收集完毕", no "正在整理", no "以下是今日Pulse", no transition sentences of any kind. The Pulse title IS the start of your response.
 
 Use the following template. All section titles and product/repo/news names MUST be hyperlinked directly — no separate "sources" section.
 
@@ -189,6 +208,17 @@ Description。{Language}。简短点评（简体中文）。
 ...
 
 (1-3 items)
+
+---
+
+## 股市
+
+**🇺🇸 BABA (NYSE)**
+${price} USD  {+/-}{change} ({+/-}{pct}%)  一句话股评。
+
+**🇭🇰 9988.HK (HKEX)**
+${price} HKD  {+/-}{change} ({+/-}{pct}%)  一句话股评。
+
 ---
 
 ## Weather
@@ -208,6 +238,7 @@ Description。{Language}。简短点评（简体中文）。
 
 ### Formatting Rules
 
+- **No preamble** ⚠️: Your response MUST start directly with `# 📡 Pulse | ...`. The `#` character must be literally the first character you output. Do NOT output any text before the title — no "数据已收集完毕", no "正在组装", no "以下是", no introductory sentences whatsoever. Violation of this rule is a critical formatting error.
 - **Headings**: Use `#` for top-level, `##` for sections, and list for individual items. This maps well to Feishu / Word export.
 - **Links**: Every product, repo, and news headline MUST be a clickable link in the `###` heading itself. Never put URLs in a footnote or "sources" block.
 - **Weather emojis**: Use appropriate weather emojis inline with the weather type.
@@ -216,3 +247,4 @@ Description。{Language}。简短点评（简体中文）。
 - **Chinese punctuation**: All Chinese prose uses full-width punctuation (，。：！？、）。
 - **Do NOT use citations or `` tags**: Pulse is a briefing, not a research report. Source attribution is handled by the hyperlinks in headings.
 - **No duplication**: Do not include the same news item in the same day.
+- **Stock section**: No tables, no charts. Plain text list format only. If market is closed (pre-market / weekend), note the last closing price and state "（已收盘）".

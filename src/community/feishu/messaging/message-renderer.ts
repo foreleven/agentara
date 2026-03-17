@@ -152,10 +152,8 @@ async function _uploadMessageResource(
   const images = text.match(/!\[.*?\]\((.*?)\)/g);
   if (images) {
     for (const image of images) {
-      console.info("image", image);
       let imagePath = image.match(/!\[.*?\]\((.*?)\)/)?.[1];
       if (imagePath) {
-        console.info("imagePath", imagePath);
         if (imagePath.startsWith("http:") || imagePath.startsWith("https:")) {
           try {
             const response = await fetch(imagePath);
@@ -181,16 +179,13 @@ async function _uploadMessageResource(
         }
         if (fs.existsSync(nodePath.join(config.paths.home, imagePath))) {
           const imageKey = await uploadImage(imagePath);
-          console.info("imageKey", imageKey);
           text = text.replaceAll(image, `![image](${imageKey})`);
-          console.info("Replace", image, `![image](${imageKey})`);
         } else {
           text = text.replaceAll(image, "");
         }
       }
     }
   }
-  console.info("text", text);
   return text;
 }
 

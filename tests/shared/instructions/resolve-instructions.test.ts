@@ -3,10 +3,7 @@ import { join } from "node:path";
 
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
-import {
-  resolveImports,
-  resolveInstructionFile,
-} from "@/shared/instructions/resolve-instructions";
+import { resolveImports, resolveInstructionFile } from "@/shared";
 
 const TEST_DIR = join(import.meta.dir, "__fixtures__");
 
@@ -82,6 +79,12 @@ describe("resolveImports", () => {
     const input = "  @memory/USER.md  ";
     const result = resolveImports(input, TEST_DIR);
     expect(result).toBe("I am the user memory.");
+  });
+
+  test("rejects path traversal imports", () => {
+    const input = "@../../../etc/passwd";
+    const result = resolveImports(input, TEST_DIR);
+    expect(result).toContain("<!-- import rejected (outside base dir)");
   });
 });
 

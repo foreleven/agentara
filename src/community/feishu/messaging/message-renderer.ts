@@ -88,9 +88,10 @@ export async function renderMessageCard(
     }
   }
   if (!streaming) {
-    const lastContent = messageContent[messageContent.length - 1];
-    if (lastContent?.type === "text") {
-      const markdownContent = await _uploadMessageResource(lastContent.text, {
+    // Find the last text block (final response), not all text blocks
+    const lastTextContent = messageContent.findLast((c) => c.type === "text");
+    if (lastTextContent) {
+      const markdownContent = await _uploadMessageResource(lastTextContent.text, {
         uploadImage,
       });
       const resultElement: MarkdownElement = {

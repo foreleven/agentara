@@ -4,7 +4,7 @@ import { and, desc, eq, isNull } from "drizzle-orm";
 
 import type { DrizzleDB } from "@/data";
 import { config, createLogger, extractTextContent, uuid } from "@/shared";
-import type { Session as SessionEntity, UserMessage } from "@/shared";
+import type { AgentConfig, Session as SessionEntity, UserMessage } from "@/shared";
 
 import { sessions } from "./data";
 import { Session } from "./session";
@@ -20,14 +20,21 @@ import {
  */
 export interface SessionResolveOptions {
   /**
+   * The name of the agent as defined in `config.yaml` (e.g. `"default"`).
+   * Determines the agent type and isolated paths when not explicitly set.
+   * Defaults to `"default"`.
+   */
+  agentName?: string;
+
+  /**
    * The type of agent runner (e.g. "claude-code").
-   * Defaults to `config.agents.default.type`.
+   * Defaults to the type of the resolved agent in config.
    */
   agentType?: string;
 
   /**
    * The current working directory for the session.
-   * Defaults to `config.paths.home`.
+   * Defaults to the agent's base path from `config.paths.resolveAgentPaths`.
    */
   cwd?: string;
 
@@ -107,8 +114,20 @@ export class SessionManager {
       throw new SessionAlreadyExistsError(sessionId);
     }
 
-    const agentType = options?.agentType ?? config.agents.default.type;
-    const cwd = options?.cwd ?? config.paths.home;
+    const requestedAgentName = options?.agentName ?? "default";
+    const agentConfig = (
+      config.agents as Record<string, AgentConfig | undefined>
+    )[requestedAgentName];
+    if (!agentConfig && requestedAgentName !== "default") {
+      this._logger.warn(
+        `Unknown agent name "${requestedAgentName}", falling back to "default"`,
+      );
+    }
+    const agentName = agentConfig ? requestedAgentName : "default";
+    const resolvedAgentConfig = agentConfig ?? config.agents.default;
+    const agentType = options?.agentType ?? resolvedAgentConfig.type;
+    const agentPaths = config.paths.resolveAgentPaths(agentName);
+    const cwd = options?.cwd ?? agentPaths.base;
     const channelId = options?.channelId ?? null;
     const now = Date.now();
 
@@ -117,6 +136,7 @@ export class SessionManager {
       .values({
         id: sessionId,
         agent_type: agentType,
+        agent_name: agentName,
         cwd,
         channel_id: channelId,
         last_message_created_at: null,
@@ -134,9 +154,10 @@ export class SessionManager {
     }
 
     this._logger.info(`Creating session: ${sessionId}`);
-    const session = new Session(sessionId, agentType, {
+    const session = new Session(sessionId, agentType, agentName, {
       isNewSession: true,
       cwd,
+      agentName,
       runnerSessionId: undefined,
     });
     this._attachWriter(session, sessionId);
@@ -166,12 +187,17 @@ export class SessionManager {
     }
 
     this._logger.info(`Resuming session: ${sessionId}`);
+    // Always use the persisted agent name on resume; the channel binding only
+    // applies to newly-created sessions.
+    const agentName = row.agent_name;
     const session = new Session(
       sessionId,
       options?.agentType ?? row.agent_type,
+      agentName,
       {
         isNewSession: false,
         cwd: options?.cwd ?? row.cwd,
+        agentName,
         runnerSessionId: row.runner_session_id ?? undefined,
       },
     );

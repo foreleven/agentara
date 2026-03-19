@@ -25,6 +25,12 @@ export const AgentRunOptions = z.object({
    * Runner-specific session/thread id used by some providers for true resume.
    */
   runnerSessionId: z.string().optional(),
+
+  /**
+   * The name of the agent as defined in `config.yaml` (e.g. `"default"`).
+   * Used to look up per-agent configuration such as the model.
+   */
+  agentName: z.string().default("default"),
 });
 export interface AgentRunOptions extends z.infer<typeof AgentRunOptions> {}
 

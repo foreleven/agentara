@@ -11,6 +11,8 @@ export const sessions = sqliteTable("sessions", {
   id: text("id").primaryKey(),
   /** The agent runner type, e.g. `"claude-code"`. */
   agent_type: text("agent_type").notNull(),
+  /** The name of the agent as defined in `config.yaml`, e.g. `"default"`. */
+  agent_name: text("agent_name").notNull().default("default"),
   /** Working directory the session was created with. */
   cwd: text("cwd").notNull(),
   /** The channel id this session belongs to, or null for legacy sessions. */

@@ -98,6 +98,93 @@ messaging:
     if (!existsSync(config.paths.data)) {
       mkdirSync(config.paths.data, { recursive: true });
     }
+
+    // Initialize isolated directories for every non-default agent defined in config.
+    this._initAgentDirectories();
+  }
+
+  /**
+   * Ensures isolated directories exist for all named agents that are not `"default"`.
+   * For each such agent, creates `memory/`, `workspace/`, `.claude/skills` under
+   * `$AGENTARA_HOME/agents/{name}/` and then symlinks
+   * `agents/{name}/.agents/skills` → `agents/{name}/.claude/skills`
+   * so the Codex CLI can discover skills via its native `.agents/skills` path.
+   */
+  private _initAgentDirectories(): void {
+    for (const [agentName] of Object.entries(config.agents)) {
+      if (agentName === "default") continue;
+      const agentPaths = config.paths.resolveAgentPaths(agentName);
+      const dirs = [
+        agentPaths.base,
+        agentPaths.memory,
+        agentPaths.workspace,
+        agentPaths.projects,
+        agentPaths.uploads,
+        agentPaths.outputs,
+        agentPaths.claude_home,
+        agentPaths.skills,
+      ];
+      for (const dir of dirs) {
+        if (!existsSync(dir)) {
+          mkdirSync(dir, { recursive: true });
+        }
+      }
+      this._ensureAgentSkillsSymlink(agentPaths.base, agentPaths.skills);
+
+      // Seed CLAUDE.md and .claude/settings.json via symlink from the global
+      // home so runners can find instructions without the user having to
+      // manually create per-agent files.  Users can replace the symlink with
+      // their own file to customise per-agent behaviour.
+      const globalClaudeMd = join(config.paths.home, "CLAUDE.md");
+      const agentClaudeMd = join(agentPaths.base, "CLAUDE.md");
+      if (!existsSync(agentClaudeMd) && existsSync(globalClaudeMd)) {
+        symlinkSync(globalClaudeMd, agentClaudeMd);
+      } else if (!existsSync(agentClaudeMd)) {
+        logger.warn(
+          `No CLAUDE.md found at ${globalClaudeMd}; agent "${agentName}" will run without instructions`,
+        );
+      }
+
+      const globalSettings = join(config.paths.claude_home, "settings.json");
+      const agentSettings = join(agentPaths.claude_home, "settings.json");
+      if (!existsSync(agentSettings) && existsSync(globalSettings)) {
+        symlinkSync(globalSettings, agentSettings);
+      }
+
+      logger.info(`Initialized directories for agent: ${agentName}`);
+    }
+  }
+
+  /**
+   * Creates `{agentBase}/.agents/skills` → `{skillsPath}` symlink so the
+   * Codex CLI can discover per-agent skills via its native `.agents/skills`
+   * directory.  The link is only created once; if it already exists no action
+   * is taken.
+   */
+  private _ensureAgentSkillsSymlink(
+    agentBase: string,
+    skillsPath: string,
+  ): void {
+    const agentsDotDir = join(agentBase, ".agents");
+    const linkPath = join(agentsDotDir, "skills");
+    try {
+      try {
+        lstatSync(linkPath);
+        return;
+      } catch (e: unknown) {
+        if ((e as NodeJS.ErrnoException)?.code !== "ENOENT") {
+          throw e;
+        }
+        // Path truly does not exist; fall through to create it.
+      }
+      mkdirSync(agentsDotDir, { recursive: true });
+      symlinkSync(skillsPath, linkPath, "dir");
+      logger.info(
+        `Created symlink ${agentBase}/.agents/skills → ${agentBase}/.claude/skills`,
+      );
+    } catch (err) {
+      logger.warn({ err }, `Failed to create .agents/skills symlink for ${agentBase}`);
+    }
   }
 
   /**

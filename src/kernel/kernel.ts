@@ -124,8 +124,12 @@ class Kernel {
     payload: InboundMessageTaskPayload,
   ) => {
     const inboundMessage = payload.message;
+    const channelConfig = config.messaging.channels.find(
+      (c) => c.id === inboundMessage.channel_id,
+    );
     const session = await this._sessionManager.resolveSession(sessionId, {
       channelId: inboundMessage.channel_id,
+      agentName: channelConfig?.agent ?? "default",
       firstMessage: inboundMessage,
     });
     let contents: AssistantMessage["content"] = [

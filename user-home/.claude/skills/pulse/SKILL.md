@@ -187,7 +187,7 @@ Description。{Language}。简短点评（简体中文）。
 ## <font color="navy">🎙️ Podcasts</font> (If exists updates)
 
 - **[Channel Name - Episode Title](episode_url)** — Podcast Name
-shownotes 摘要（不要原文，1-2 句简体中文重点总结，以及我为什么需要关注）。
+shownotes 摘要（1-2 句简体中文重点总结，以及我为什么需要关注）。
 
 - **[Episode Title](episode_url)** — Podcast Name
 ...

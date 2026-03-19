@@ -89,4 +89,29 @@ describe("config.paths.resolveAgentPaths", () => {
   test("agents directory is under home", () => {
     expect(paths.agents).toBe(join(paths.home, "agents"));
   });
+
+  test("rejects agent name with path separator", () => {
+    expect(() => paths.resolveAgentPaths("../etc/passwd")).toThrow(
+      /Invalid agent name/,
+    );
+    expect(() => paths.resolveAgentPaths("foo/bar")).toThrow(
+      /Invalid agent name/,
+    );
+    expect(() => paths.resolveAgentPaths("foo\\bar")).toThrow(
+      /Invalid agent name/,
+    );
+  });
+
+  test("rejects agent name starting with special character", () => {
+    expect(() => paths.resolveAgentPaths("-foo")).toThrow(/Invalid agent name/);
+    expect(() => paths.resolveAgentPaths("_foo")).toThrow(/Invalid agent name/);
+  });
+
+  test("accepts valid agent names", () => {
+    expect(() => paths.resolveAgentPaths("myagent")).not.toThrow();
+    expect(() => paths.resolveAgentPaths("my-agent")).not.toThrow();
+    expect(() => paths.resolveAgentPaths("my_agent")).not.toThrow();
+    expect(() => paths.resolveAgentPaths("agent123")).not.toThrow();
+    expect(() => paths.resolveAgentPaths("A1")).not.toThrow();
+  });
 });

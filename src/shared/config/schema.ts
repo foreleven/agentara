@@ -41,6 +41,8 @@ export const ChannelConfig = z.object({
   name: z.string(),
   description: z.string(),
   params: ChannelParams,
+  /** The agent name to use for sessions created from this channel. Defaults to `"default"`. */
+  agent: z.string().default("default"),
 });
 export interface ChannelConfig extends z.infer<typeof ChannelConfig> {}
 

@@ -32,3 +32,43 @@ export const claude_home = join(home, ".claude");
 export const skills = join(claude_home, "skills");
 
 export const agents_home = join(home, ".agents");
+
+/** Root directory that holds isolated sub-directories for each named agent. */
+export const agents = join(home, "agents");
+
+/**
+ * Returns the set of isolated paths for a named agent.
+ *
+ * For the `"default"` agent the paths are identical to the top-level paths
+ * (backward-compatible). For every other agent the paths are scoped under
+ * `$AGENTARA_HOME/agents/{name}/`.
+ */
+export function resolveAgentPaths(agentName: string) {
+  if (agentName === "default") {
+    return {
+      /** The agent's home / working directory (where CLAUDE.md lives). */
+      base: home,
+      memory,
+      workspace,
+      projects,
+      uploads,
+      outputs,
+      claude_home,
+      skills,
+    };
+  }
+  const base = join(agents, agentName);
+  const agentMemory = join(base, "memory");
+  const agentWorkspace = join(base, "workspace");
+  const agentClaudeHome = join(base, ".claude");
+  return {
+    base,
+    memory: agentMemory,
+    workspace: agentWorkspace,
+    projects: join(agentWorkspace, "projects"),
+    uploads: join(agentWorkspace, "uploads"),
+    outputs: join(agentWorkspace, "outputs"),
+    claude_home: agentClaudeHome,
+    skills: join(agentClaudeHome, "skills"),
+  };
+}

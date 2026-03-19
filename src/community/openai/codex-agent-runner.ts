@@ -7,6 +7,7 @@ import {
   extractTextContent,
   resolveInstructionFile,
   uuid,
+  type AgentConfig,
   type ToolMessage,
   type AgentRunner,
   type AgentRunOptions,
@@ -46,6 +47,7 @@ export class CodexAgentRunner implements AgentRunner {
       isNew,
       resumeId,
       prompt: textContentOfUserMessage,
+      options,
     });
 
     const proc = Bun.spawn(args, {
@@ -431,15 +433,17 @@ export class CodexAgentRunner implements AgentRunner {
     isNew,
     resumeId,
     prompt,
+    options,
   }: {
     isNew: boolean;
     resumeId: string;
     prompt: string;
+    options?: AgentRunOptions;
   }): string[] {
     const shared = [
       "codex",
       "exec",
-      ...["--model", config.agents.default.model],
+      ...["--model", this._resolveModel(options)],
       "--json",
       "--dangerously-bypass-approvals-and-sandbox",
       "--skip-git-repo-check",
@@ -448,6 +452,18 @@ export class CodexAgentRunner implements AgentRunner {
       return [...shared, prompt];
     }
     return [...shared, "resume", resumeId, prompt];
+  }
+
+  /**
+   * Resolves the model name from the run options.
+   * Uses the agent-specific model if available, falling back to the default.
+   */
+  private _resolveModel(options?: AgentRunOptions): string {
+    const agentName = options?.agentName ?? "default";
+    const agentConfig =
+      (config.agents as Record<string, AgentConfig | undefined>)[agentName] ??
+      config.agents.default;
+    return agentConfig.model;
   }
 
   /**

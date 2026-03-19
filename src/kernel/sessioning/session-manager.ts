@@ -114,11 +114,18 @@ export class SessionManager {
       throw new SessionAlreadyExistsError(sessionId);
     }
 
-    const agentName = options?.agentName ?? "default";
-    const agentConfig =
-      (config.agents as Record<string, AgentConfig | undefined>)[agentName] ??
-      config.agents.default;
-    const agentType = options?.agentType ?? agentConfig.type;
+    const requestedAgentName = options?.agentName ?? "default";
+    const agentConfig = (
+      config.agents as Record<string, AgentConfig | undefined>
+    )[requestedAgentName];
+    if (!agentConfig && requestedAgentName !== "default") {
+      this._logger.warn(
+        `Unknown agent name "${requestedAgentName}", falling back to "default"`,
+      );
+    }
+    const agentName = agentConfig ? requestedAgentName : "default";
+    const resolvedAgentConfig = agentConfig ?? config.agents.default;
+    const agentType = options?.agentType ?? resolvedAgentConfig.type;
     const agentPaths = config.paths.resolveAgentPaths(agentName);
     const cwd = options?.cwd ?? agentPaths.base;
     const channelId = options?.channelId ?? null;
@@ -180,7 +187,9 @@ export class SessionManager {
     }
 
     this._logger.info(`Resuming session: ${sessionId}`);
-    const agentName = options?.agentName ?? row.agent_name;
+    // Always use the persisted agent name on resume; the channel binding only
+    // applies to newly-created sessions.
+    const agentName = row.agent_name;
     const session = new Session(
       sessionId,
       options?.agentType ?? row.agent_type,

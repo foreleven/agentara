@@ -130,6 +130,27 @@ messaging:
         }
       }
       this._ensureAgentSkillsSymlink(agentPaths.base, agentPaths.skills);
+
+      // Seed CLAUDE.md and .claude/settings.json via symlink from the global
+      // home so runners can find instructions without the user having to
+      // manually create per-agent files.  Users can replace the symlink with
+      // their own file to customise per-agent behaviour.
+      const globalClaudeMd = join(config.paths.home, "CLAUDE.md");
+      const agentClaudeMd = join(agentPaths.base, "CLAUDE.md");
+      if (!existsSync(agentClaudeMd) && existsSync(globalClaudeMd)) {
+        symlinkSync(globalClaudeMd, agentClaudeMd);
+      } else if (!existsSync(agentClaudeMd)) {
+        logger.warn(
+          `No CLAUDE.md found at ${globalClaudeMd}; agent "${agentName}" will run without instructions`,
+        );
+      }
+
+      const globalSettings = join(config.paths.claude_home, "settings.json");
+      const agentSettings = join(agentPaths.claude_home, "settings.json");
+      if (!existsSync(agentSettings) && existsSync(globalSettings)) {
+        symlinkSync(globalSettings, agentSettings);
+      }
+
       logger.info(`Initialized directories for agent: ${agentName}`);
     }
   }

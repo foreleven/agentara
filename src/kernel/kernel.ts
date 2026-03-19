@@ -127,9 +127,19 @@ class Kernel {
     const channelConfig = config.messaging.channels.find(
       (c) => c.id === inboundMessage.channel_id,
     );
+    const requestedAgent = channelConfig?.agent ?? "default";
+    const agentName =
+      requestedAgent in (config.agents as Record<string, unknown>)
+        ? requestedAgent
+        : (() => {
+            this._logger.warn(
+              `Channel "${inboundMessage.channel_id}" references unknown agent "${requestedAgent}", falling back to "default"`,
+            );
+            return "default";
+          })();
     const session = await this._sessionManager.resolveSession(sessionId, {
       channelId: inboundMessage.channel_id,
-      agentName: channelConfig?.agent ?? "default",
+      agentName,
       firstMessage: inboundMessage,
     });
     let contents: AssistantMessage["content"] = [

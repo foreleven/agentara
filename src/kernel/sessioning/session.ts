@@ -25,6 +25,7 @@ export class Session extends EventEmitter {
    * Initialize a session.
    * @param id The id of the session.
    * @param agentType The type of the agent.
+   * @param agentName The name of the agent as defined in `config.yaml`.
    * @param options Run options (isNewSession, cwd).
    */
   constructor(
@@ -32,6 +33,8 @@ export class Session extends EventEmitter {
     readonly id: string,
     // eslint-disable-next-line no-unused-vars
     readonly agentType: string,
+    // eslint-disable-next-line no-unused-vars
+    readonly agentName: string,
     // eslint-disable-next-line no-unused-vars
     readonly options: AgentRunOptions,
   ) {
@@ -49,9 +52,10 @@ export class Session extends EventEmitter {
     AsyncIterableIterator<SystemMessage | AssistantMessage | ToolMessage>
   > {
     this.emit("message", userMessage);
-    const runner = createAgentRunner(this.agentType);
+    const runner = createAgentRunner(this.agentType, this.agentName);
     const rawStream = runner.stream(userMessage, {
       ...this.options,
+      agentName: this.agentName,
     });
     this.options.isNewSession = false;
     // eslint-disable-next-line @typescript-eslint/no-this-alias

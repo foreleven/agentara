@@ -11,6 +11,8 @@ export const Session = z.object({
   id: z.string(),
   /** The agent runner type, e.g. `"claude-code"`. */
   agent_type: z.string(),
+  /** The name of the agent as defined in `config.yaml`, e.g. `"default"`. */
+  agent_name: z.string().default("default"),
   /** Working directory the session was created with. */
   cwd: z.string(),
   /** The channel id this session belongs to, or null/undefined for legacy sessions. */

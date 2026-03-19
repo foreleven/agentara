@@ -5,9 +5,13 @@ import { DummyAgentRunner, MockAgentRunner, type AgentRunner } from "@/shared";
 /**
  * Creates an agent runner based on the agent type.
  * @param agentType The type of the agent.
+ * @param agentName The name of the agent as defined in `config.yaml`.
  * @returns The agent runner.
  */
-export function createAgentRunner(agentType: string): AgentRunner {
+export function createAgentRunner(
+  agentType: string,
+  agentName: string = "default",
+): AgentRunner {
   switch (agentType) {
     case "claude":
       return new ClaudeAgentRunner();
@@ -20,6 +24,8 @@ export function createAgentRunner(agentType: string): AgentRunner {
         "user-home/sessions/34681283-bf20-4dc4-8301-a0929104002e.jsonl",
       );
     default:
-      throw new Error(`Unknown agent type: ${agentType}`);
+      throw new Error(
+        `Unknown agent type: ${agentType} (agent: ${agentName})`,
+      );
   }
 }

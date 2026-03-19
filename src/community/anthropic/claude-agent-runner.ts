@@ -1,6 +1,7 @@
 import {
   config,
   extractTextContent,
+  type AgentConfig,
   type MessageContent,
   type ToolMessage,
   type AgentRunner,
@@ -26,10 +27,15 @@ export class ClaudeAgentRunner implements AgentRunner {
       extractTextContent(message),
     );
 
+    const agentName = options?.agentName ?? "default";
+    const agentConfig =
+      (config.agents as Record<string, AgentConfig | undefined>)[agentName] ??
+      config.agents.default;
+
     const args = [
       "claude",
       ...(!isNew ? ["--resume", sessionId] : ["--session-id", sessionId]),
-      ...["--model", config.agents.default.model],
+      ...["--model", agentConfig.model],
       ...["--output-format", "stream-json"],
       "--print",
       "--verbose",

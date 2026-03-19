@@ -11,10 +11,11 @@ export interface AgentConfig extends z.infer<typeof AgentConfig> {}
 
 /**
  * Configuration for all agents.
+ * Must contain a `default` entry; additional named agents are allowed.
  */
 export const AgentsConfig = z.object({
   default: AgentConfig,
-});
+}).catchall(AgentConfig);
 export interface AgentsConfig extends z.infer<typeof AgentsConfig> {}
 
 /**

@@ -98,6 +98,40 @@ messaging:
     if (!existsSync(config.paths.data)) {
       mkdirSync(config.paths.data, { recursive: true });
     }
+
+    // Initialize isolated directories for every non-default agent defined in config.
+    this._initAgentDirectories();
+  }
+
+  /**
+   * Ensures isolated directories exist for all named agents that are not `"default"`.
+   * For each such agent, creates `memory/`, `workspace/`, `.claude/` under
+   * `$AGENTARA_HOME/agents/{name}/` and symlinks `.agents/{name}/skills →
+   * .claude/skills` for Codex CLI compatibility.
+   */
+  private _initAgentDirectories(): void {
+    for (const [agentName] of Object.entries(config.agents)) {
+      if (agentName === "default") continue;
+      const agentPaths = config.paths.resolveAgentPaths(agentName);
+      const dirs = [
+        agentPaths.base,
+        agentPaths.memory,
+        agentPaths.workspace,
+        agentPaths.projects,
+        agentPaths.uploads,
+        agentPaths.outputs,
+        agentPaths.claude_home,
+      ];
+      for (const dir of dirs) {
+        if (!existsSync(dir)) {
+          mkdirSync(dir, { recursive: true });
+        }
+      }
+      if (!existsSync(agentPaths.skills)) {
+        mkdirSync(agentPaths.skills, { recursive: true });
+      }
+      logger.info(`Initialized directories for agent: ${agentName}`);
+    }
   }
 
   /**

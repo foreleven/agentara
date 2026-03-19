@@ -440,12 +440,19 @@ export class CodexAgentRunner implements AgentRunner {
     prompt: string;
     options?: AgentRunOptions;
   }): string[] {
+    const agentName = options?.agentName ?? "default";
+    const agentPaths = config.paths.resolveAgentPaths(agentName);
     const shared = [
       "codex",
       "exec",
       ...["--model", this._resolveModel(options)],
       "--json",
-      "--dangerously-bypass-approvals-and-sandbox",
+      // Allow writes only inside the agent's workspace; everything else is
+      // read-only.  This replaces --dangerously-bypass-approvals-and-sandbox.
+      "--sandbox",
+      "workspace-read",
+      "--add-writable",
+      agentPaths.workspace,
       "--skip-git-repo-check",
     ];
     if (isNew) {

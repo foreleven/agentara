@@ -216,9 +216,7 @@ export class CodexAgentRunner implements AgentRunner {
             id: itemId,
             session_id: sessionId,
             role: "assistant" as const,
-            content: [
-              { type: "thinking" as const, thinking: item.text ?? "" },
-            ],
+            content: [{ type: "thinking" as const, thinking: item.text ?? "" }],
           },
         ];
       }
@@ -318,7 +316,7 @@ export class CodexAgentRunner implements AgentRunner {
         if (eventType === "item.completed") {
           const resultText = item.result?.content
             ? JSON.stringify(item.result.content)
-            : item.error?.message ?? "";
+            : (item.error?.message ?? "");
           return [
             {
               id: `${itemId}-result`,
@@ -447,18 +445,19 @@ export class CodexAgentRunner implements AgentRunner {
       "exec",
       ...["--model", this._resolveModel(options)],
       "--json",
+      "--full-auto",
       // Allow writes only inside the agent's workspace; everything else is
       // read-only.  This replaces --dangerously-bypass-approvals-and-sandbox.
       "--sandbox",
-      "workspace-read",
-      "--add-writable",
+      "workspace-write",
+      "--cd",
       agentPaths.workspace,
       "--skip-git-repo-check",
     ];
     if (isNew) {
       return [...shared, prompt];
     }
-    return [...shared, "resume", resumeId, prompt];
+    return [...shared, "resume", resumeId, "--all", prompt];
   }
 
   /**
@@ -481,6 +480,7 @@ export class CodexAgentRunner implements AgentRunner {
    */
   private _syncAgentsMd(cwd: string): void {
     try {
+      const workspaceDir = join(cwd, "workspace");
       const claudeMdPath = join(cwd, "CLAUDE.md");
       if (!existsSync(claudeMdPath)) {
         return;
@@ -492,7 +492,7 @@ export class CodexAgentRunner implements AgentRunner {
       }
       const normalized = resolved.replaceAll("Claude Code", "Codex");
 
-      const agentsMdPath = join(cwd, "AGENTS.md");
+      const agentsMdPath = join(workspaceDir, "AGENTS.md");
 
       // Skip write when contents are identical to avoid file-watcher churn.
       if (existsSync(agentsMdPath)) {

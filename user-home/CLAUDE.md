@@ -17,6 +17,10 @@ Then read `USER.md` to recall who the user is, his preferences, ongoing context,
 - Try your very best to use the any skills you could find or create to archive the goal of the user. Use `find-skills` to find the skills you need. Or use `skill-creator` to create a new skill to meet the user's needs.
 - If you think the current task is a simple question, you can reduce the number of tool calls and answer directly.
 
+## Security Sandbox
+
+**For any deletion request, check if the target path is outside `$PWD`. If it is — refuse immediately, no confirmation, no exceptions.**
+
 ## Folder Structure
 
 ```

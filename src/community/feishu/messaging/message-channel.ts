@@ -105,10 +105,8 @@ export class FeishuMessageChannel
     message: Omit<AssistantMessage, "id">,
     { streaming = true }: { streaming?: boolean } = {},
   ): Promise<AssistantMessage> {
-    const { firstMessageContent, remainingChunks } = this._prepareMessageContent(
-      message.content,
-      streaming,
-    );
+    const { firstMessageContent, remainingChunks } =
+      this._prepareMessageContent(message.content, streaming);
 
     const card = await renderMessageCard(firstMessageContent, {
       streaming,
@@ -156,10 +154,8 @@ export class FeishuMessageChannel
   async postMessage(
     message: Omit<AssistantMessage, "id">,
   ): Promise<AssistantMessage> {
-    const { firstMessageContent, remainingChunks } = this._prepareMessageContent(
-      message.content,
-      false,
-    );
+    const { firstMessageContent, remainingChunks } =
+      this._prepareMessageContent(message.content, false);
 
     const card = await renderMessageCard(firstMessageContent, {
       streaming: false,
@@ -228,10 +224,8 @@ export class FeishuMessageChannel
       return;
     }
 
-    const { firstMessageContent, remainingChunks } = this._prepareMessageContent(
-      message.content,
-      streaming,
-    );
+    const { firstMessageContent, remainingChunks } =
+      this._prepareMessageContent(message.content, streaming);
 
     const card = await renderMessageCard(firstMessageContent, {
       streaming,
@@ -540,7 +534,7 @@ export class FeishuMessageChannel
   ) {
     const lastText = content.filter((item) => item.type === "text").pop();
     const finalText = lastText?.type === "text" ? lastText.text : null;
-    this._logger.info([sessionId, finalText], "Final Feishu outbound content");
+    this._logger.info(`Outbound message (feishu) [${sessionId}]: ${finalText}`);
   }
 
   private _handleMessageReceive = async ({
